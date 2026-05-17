@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GymRato – Twój plan treningowy i dieta</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --green:#b5f542; --dark:#0f0f0f; --card:#1a1a1a; --border:#2a2a2a; --text:#f0f0f0; --muted:#888; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--dark); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; }
+  header { padding:2rem 1.5rem 1.5rem; text-align:center; border-bottom:1px solid var(--border); }
+  .logo { font-family:'Bebas Neue',sans-serif; font-size:3rem; letter-spacing:2px; color:var(--green); line-height:1; }
+  .logo span { color:var(--text); }
+  header p { color:var(--muted); font-size:0.9rem; margin-top:4px; }
+  .tabs { display:flex; border-bottom:1px solid var(--border); padding:0 1.5rem; }
+  .tab { padding:1rem 1.5rem; font-size:0.95rem; font-family:'DM Sans',sans-serif; font-weight:500; cursor:pointer; border:none; background:none; color:var(--muted); border-bottom:2px solid transparent; transition:color .2s,border-color .2s; }
+  .tab.active { color:var(--green); border-bottom:2px solid var(--green); }
+  .tab:hover:not(.active) { color:var(--text); }
+  .section { display:none; padding:1.5rem; max-width:700px; margin:0 auto; }
+  .section.active { display:block; }
+  .field { margin-bottom:1.5rem; }
+  .field-label { font-size:0.75rem; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:0.6rem; }
+  .options { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; }
+  .opt { padding:10px 14px; border:1px solid var(--border); border-radius:8px; cursor:pointer; font-size:0.875rem; color:var(--muted); background:var(--card); text-align:center; transition:all .15s; font-family:'DM Sans',sans-serif; user-select:none; }
+  .opt:hover { border-color:#444; color:var(--text); }
+  .opt.selected { border-color:var(--green); color:var(--dark); background:var(--green); font-weight:600; }
+  .btn { width:100%; padding:14px; background:var(--green); color:var(--dark); border:none; border-radius:8px; font-size:1rem; font-weight:700; font-family:'DM Sans',sans-serif; cursor:pointer; letter-spacing:.5px; transition:opacity .2s; margin-top:.5rem; }
+  .btn:hover { opacity:.9; }
+  .result { display:none; margin-top:1.5rem; border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .result.show { display:block; }
+  .result-header { background:var(--green); color:var(--dark); padding:1rem 1.25rem; font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:1px; }
+  .result-body { padding:1.25rem; }
+  .day { margin-bottom:1.25rem; padding-bottom:1.25rem; border-bottom:1px solid var(--border); }
+  .day:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0; }
+  .day-name { font-weight:600; color:var(--green); font-size:0.875rem; margin-bottom:8px; }
+  .day-ex { font-size:0.875rem; color:var(--text); line-height:2; }
+  .meal { margin-bottom:1rem; }
+  .meal:last-child { margin-bottom:0; }
+  .meal-name { font-weight:600; color:var(--green); font-size:0.875rem; }
+  .meal-desc { font-size:0.875rem; color:var(--muted); margin-top:2px; line-height:1.7; }
+  .badge { display:inline-block; background:#1f2a14; color:var(--green); font-size:.75rem; font-weight:600; padding:3px 10px; border-radius:99px; margin-bottom:1rem; }
+  @media(max-width:480px) { .logo{font-size:2.2rem;} .options{grid-template-columns:repeat(2,1fr);} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">GYM<span>RATO</span></div>
+  <p>Darmowy generator planów treningowych i diet</p>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('trening',this)">🏋️ Trening</button>
+  <button class="tab" onclick="switchTab('dieta',this)">🥗 Dieta</button>
+</div>
+
+<div id="trening" class="section active">
+  <div class="field">
+    <div class="field-label">Twój cel</div>
+    <div class="options">
+      <div class="opt" data-group="tcel" data-value="masa">💪 Budowa masy</div>
+      <div class="opt" data-group="tcel" data-value="redukcja">🔥 Redukcja tłuszczu</div>
+      <div class="opt" data-group="tcel" data-value="sila">⚡ Siła i wydolność</div>
+      <div class="opt" data-group="tcel" data-value="zdrowie">🌿 Ogólne zdrowie</div>
+    </div>
+  </div>
+  <div class="field">
+    <div class="field-label">Poziom zaawansowania</div>
+    <div class="options">
+      <div class="opt" data-group="tpoz" data-value="poczatkujacy">🌱 Początkujący</div>
+      <div class="opt" data-group="tpoz" data-value="sredni">🔄 Średni</div>
+      <div class="opt" data-group="tpoz" data-value="zaawansowany">🦾 Zaawansowany</div>
+    </div>
+  </div>
+  <div class="field">
+    <div class="field-label">Miejsce treningu</div>
+    <div class="options">
+      <div class="opt" data-group="tmiej" data-value="silownia">🏟️ Siłownia</div>
+      <div class="opt" data-group="tmiej" data-value="dom">🏠 Dom (bez sprzętu)</div>
+      <div class="opt" data-group="tmiej" data-value="hantle">🏋️ Dom (z hantlami)</div>
+      <div class="opt" data-group="tmiej" data-value="zewnatrz">🌳 Na zewnątrz</div>
+    </div>
+  </div>
+  <div class="field">
+    <div class="field-label">Dni treningowe w tygodniu</div>
+    <div class="options" style="grid-template-columns:repeat(4,1fr)">
+      <div class="opt" data-group="tdni" data-value="2">2 dni</div>
+      <div class="opt" data-group="tdni" data-value="3">3 dni</div>
+      <div class="opt" data-group="tdni" data-value="4">4 dni</div>
+      <div class="opt" data-group="tdni" data-value="5">5 dni</div>
+    </div>
+  </div>
+  <button class="btn" onclick="generateTrening()">Generuj mój plan →</button>
+  <div class="result" id="tresult">
+    <div class="result-header" id="tresult-title"></div>
+    <div class="result-body" id="tresult-body"></div>
+  </div>
+</div>
+
+<div id="dieta" class="section">
+  <div class="field">
+    <div class="field-label">Twój cel</div>
+    <div class="options">
+      <div class="opt" data-group="dcel" data-value="redukcja">📉 Redukcja wagi</div>
+      <div class="opt" data-group="dcel" data-value="masa">💪 Budowa masy</div>
+      <div class="opt" data-group="dcel" data-value="utrzymanie">⚖️ Utrzymanie wagi</div>
+      <div class="opt" data-group="dcel" data-value="zdrowie">🌱 Zdrowe odżywianie</div>
+    </div>
+  </div>
+  <div class="field">
+    <div class="field-label">Preferencje żywieniowe</div>
+    <div class="options">
+      <div class="opt" data-group="dpref" data-value="wszystko">🍖 Wszystkojedzący</div>
+      <div class="opt" data-group="dpref" data-value="wegetarian">🥦 Wegetarianin</div>
+      <div class="opt" data-group="dpref" data-value="wegan">🌿 Wegański</div>
+      <div class="opt" data-group="dpref" data-value="bezgluten">🌾 Bez glutenu</div>
+    </div>
+  </div>
+  <div class="field">
+    <div class="field-label">Liczba posiłków dziennie</div>
+    <div class="options" style="grid-template-columns:repeat(4,1fr)">
+      <div class="opt" data-group="dpos" data-value="3">3 posiłki</div>
+      <div class="opt" data-group="dpos" data-value="4">4 posiłki</div>
+      <div class="opt" data-group="dpos" data-value="5">5 posiłków</div>
+      <div class="opt" data-group="dpos" data-value="6">6 posiłków</div>
+    </div>
+  </div>
+  <button class="btn" onclick="generateDieta()">Generuj mój plan diety →</button>
+  <div class="result" id="dresult">
+    <div class="result-header" id="dresult-title"></div>
+    <div class="result-body" id="dresult-body"></div>
+  </div>
+</div>
+
+<script>
+const sel = {};
+
+document.querySelectorAll('.opt').forEach(el => {
+  el.addEventListener('click', () => {
+    const g = el.dataset.group;
+    document.querySelectorAll(`[data-group="${g}"]`).forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+    sel[g] = el.dataset.value;
+  });
+});
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(tab).classList.add('active');
+}
+
+// ===================== BAZA TRENINGÓW =====================
+// Klucz: cel -> poziom -> miejsce -> liczba_dni -> [lista dni]
+// cel: masa | redukcja | sila | zdrowie
+// poziom: poczatkujacy | sredni | zaawansowany
+// miejsce: silownia | dom | hantle | zewnatrz
+// dni: 2 | 3 | 4 | 5
+
+const T = {
+  masa: {
+    poczatkujacy: {
+      silownia: {
+        2: [
+          { d:'Poniedziałek – Góra ciała (A)', e:['Wyciskanie sztangi na ławce płaskiej – 3×8','Wiosłowanie sztangą w opadzie – 3×8','Wyciskanie żołnierskie hantlami – 3×10','Uginanie biceps ze sztangą – 3×10','Prostowanie triceps przy wyciągu – 3×10'] },
+          { d:'Czwartek – Dół ciała (B)', e:['Przysiady ze sztangą (nauka techniki) – 3×10','Leg press – 3×12','Uginanie nóg w leżeniu – 3×12','Prostowanie nóg siedząc – 3×12','Wspięcia na palce – 3×15'] },
+        ],
+        3: [
+          { d:'Poniedziałek – Klatka + Biceps', e:['Wyciskanie sztangi – 3×10','Rozpiętki hantlami – 3×12','Uginanie biceps ze sztangą – 3×12','Uginanie biceps hantlami naprzemiennie – 3×12'] },
+          { d:'Środa – Plecy + Triceps', e:['Ściąganie drążka do klatki – 3×10','Wiosłowanie hantlem – 3×12','Prostowanie triceps przy wyciągu – 3×12','Dipy na poręczach (asystowane) – 3×10'] },
+          { d:'Piątek – Nogi + Barki', e:['Leg press – 3×12','Uginanie nóg – 3×12','Prostowanie nóg – 3×12','Unoszenie ramion bokiem – 3×15','Wznosy barków – 3×15'] },
+        ],
+        4: [
+          { d:'Poniedziałek – Klatka', e:['Wyciskanie sztangi – 3×10','Wyciskanie hantli – 3×12','Rozpiętki hantlami – 3×12','Pompki – 3×15'] },
+          { d:'Wtorek – Plecy', e:['Ściąganie drążka do klatki – 3×10','Wiosłowanie hantlem – 3×12','Wiosłowanie na maszynie – 3×12','Superman na macie – 3×12'] },
+          { d:'Czwartek – Nogi', e:['Leg press – 4×12','Uginanie nóg – 3×12','Prostowanie nóg – 3×12','Wspięcia na palce – 4×15'] },
+          { d:'Piątek – Barki + Ramiona', e:['Unoszenie ramion bokiem – 3×15','Wyciskanie żołnierskie hantlami – 3×10','Uginanie biceps – 3×12','Prostowanie triceps – 3×12'] },
+        ],
+        5: [
+          { d:'Poniedziałek – Klatka', e:['Wyciskanie sztangi – 4×10','Wyciskanie hantli skos – 3×12','Rozpiętki – 3×12','Pompki – 3×15'] },
+          { d:'Wtorek – Plecy', e:['Ściąganie drążka – 4×10','Wiosłowanie hantlem – 3×12','Wiosłowanie maszyna – 3×12','Prostowanie pleców – 3×12'] },
+          { d:'Środa – Nogi', e:['Leg press – 4×12','Uginanie nóg – 3×12','Prostowanie nóg – 3×12','Wspięcia – 4×15'] },
+          { d:'Czwartek – Barki', e:['Wyciskanie żołnierskie – 3×10','Unoszenie bokiem – 3×15','Unoszenie w przód – 3×12','Wznosy barków – 3×15'] },
+          { d:'Piątek – Ramiona', e:['Uginanie biceps sztanga – 3×12','Uginanie hantlami – 3×12','Prostowanie triceps – 3×12','Dipy asystowane – 3×10'] },
+        ],
+      },
+      dom: {
+        2: [
+          { d:'Wtorek – Góra ciała', e:['Pompki o szerokim rozstawie – 3×10','Pompki o wąskim rozstawie (triceps) – 3×10','Dipy na krześle – 3×10','Plank – 3×30s'] },
+          { d:'Piątek – Dół ciała', e:['Przysiady – 3×15','Wykroki – 3×10 na nogę','Mostek biodrowy – 3×15','Wspięcia na palce – 3×20'] },
+        ],
+        3: [
+          { d:'Poniedziałek – Góra ciała', e:['Pompki – 3×10','Pompki wąskie – 3×10','Dipy na krześle – 3×10','Plank – 3×30s'] },
+          { d:'Środa – Dół ciała', e:['Przysiady – 3×15','Wykroki – 3×10 na nogę','Mostek biodrowy – 3×15','Wspięcia – 3×20'] },
+          { d:'Piątek – Full body', e:['Pompki – 3×10','Przysiady – 3×15','Burpees – 3×8','Plank – 3×30s'] },
+        ],
+        4: [
+          { d:'Poniedziałek – Klatka/Triceps', e:['Pompki szerokie – 3×10','Pompki wąskie – 3×10','Dipy na krześle – 3×10','Plank – 3×30s'] },
+          { d:'Wtorek – Dół ciała', e:['Przysiady – 4×15','Wykroki – 3×10 na nogę','Mostek biodrowy – 3×15','Wspięcia – 3×20'] },
+          { d:'Czwartek – Plecy/Core', e:['Superman – 3×12','Plank – 3×35s','Plank boczny – 3×20s','Odwrotne pompki – 3×10'] },
+          { d:'Piątek – Full body', e:['Pompki – 3×12','Przysiady jump – 3×10','Burpees – 3×8','Mountain climbers – 3×20'] },
+        ],
+        5: [
+          { d:'Poniedziałek – Klatka/Triceps', e:['Pompki – 3×12','Pompki wąskie – 3×10','Dipy na krześle – 3×10','Plank – 3×35s'] },
+          { d:'Wtorek – Dół ciała', e:['Przysiady – 4×15','Wykroki – 3×12 na nogę','Mostek biodrowy – 3×15','Wspięcia – 3×20'] },
+          { d:'Środa – Lekki cardio', e:['Marsz szybki 20 min','Jumping jacks – 3×30s','Rozciąganie – 10 min'] },
+          { d:'Czwartek – Plecy/Core', e:['Superman – 3×12','Plank – 3×40s','Plank boczny – 3×25s','Hollow body – 3×20s'] },
+          { d:'Piątek – Full body', e:['Pompki – 3×12','Przysiady jump – 3×10','Burpees – 3×8','Mountain climbers – 3×20'] },
+        ],
+      },
+      hantle: {
+        2: [
+          { d:'Poniedziałek – Góra ciała', e:['Wyciskanie hantli – 3×10','Wiosłowanie hantlem – 3×10 na stronę','Unoszenie bokiem – 3×12','Uginanie biceps – 3×12'] },
+          { d:'Czwartek – Dół + Core', e:['Przysiady z hantlami – 3×12','Wykroki z hantlami – 3×10 na nogę','Mostek biodrowy – 3×15','Plank – 3×30s'] },
+        ],
+        3: [
+          { d:'Poniedziałek – Klatka/Triceps', e:['Wyciskanie hantli – 3×10','Rozpiętki hantlami – 3×12','Wyciskanie francuskie hantlem – 3×12','Pompki – 3×10'] },
+          { d:'Środa – Plecy/Biceps', e:['Wiosłowanie hantlem – 3×10 na stronę','Odwrotne rozpiętki – 3×12','Uginanie biceps – 3×12','Superman – 3×12'] },
+          { d:'Piątek – Nogi + Barki', e:['Przysiady z hantlami – 3×12','Wykroki z hantlami – 3×10 na nogę','Unoszenie bokiem – 3×12','Wyciskanie żołnierskie hantlami – 3×10'] },
+        ],
+        4: [
+          { d:'Poniedziałek – Klatka', e:['Wyciskanie hantli – 3×10','Rozpiętki – 3×12','Pompki – 3×12','Plank – 3×30s'] },
+          { d:'Wtorek – Plecy', e:['Wiosłowanie hantlem – 3×10 na stronę','Odwrotne rozpiętki – 3×12','Superman – 3×12'] },
+          { d:'Czwartek – Nogi', e:['Przysiady z hantlami – 4×12','Wykroki – 3×10 na nogę','Mostek biodrowy – 3×15','Wspięcia – 3×20'] },
+          { d:'Piątek – Barki + Ramiona', e:['Wyciskanie żołnierskie hantlami – 3×10','Unoszenie bokiem – 3×12','Uginanie biceps – 3×12','Wyciskanie francuskie – 3×12'] },
+        ],
+        5: [
+          { d:'Poniedziałek – Klatka', e:['Wyciskanie hantli – 3×10','Rozpiętki – 3×12','Pompki – 3×12'] },
+          { d:'Wtorek – Plecy', e:['Wiosłowanie hantlem – 3×10','Odwrotne rozpiętki – 3×12','Superman – 3×12'] },
+          { d:'Środa – Nogi', e:['Przysiady z hantlami – 4×12','Wykroki – 3×10','Mostek – 3×15','Wspięcia – 3×20'] },
+          { d:'Czwartek – Barki', e:['Wyciskanie żołnierskie – 3×10','Unoszenie bokiem – 3×12','Unoszenie w przód – 3×12'] },
+          { d:'Piątek – Ramiona + Core', e:['Uginanie biceps – 3×12','Wyciskanie francuskie – 3×12','Plank – 3×35s','Rosyjskie skręty – 3×15'] },
+        ],
+      },
+      zewnatrz: {
+        2: [
+          { d:'Wtorek – Siła + Cardio', e:['Pompki – 3×10','Przysiady – 3×15','Dipy na ławce parkowej – 3×10','Bieg truchtem 15 min'] },
+          { d:'Sobota – Full body', e:['Pompki – 3×12','Burpees – 3×8','Przysiady jump – 3×10','Plank – 3×30s'] },
+        ],
+        3: [
+          { d:'Poniedziałek – Siła', e:['Pompki – 3×10','Dipy na ławce – 3×10','Przysiady – 3×15','Podciąganie (jeśli dostępne) – 3×5'] },
+          { d:'Środa – Bieg/Cardio', e:['Trucht 20–25 min','Rozciąganie dynamiczne – 10 min'] },
+          { d:'Piątek – Full body', e:['Pompki – 3×12','Przysiady jump – 3×10','Burpees – 3×8','Plank – 3×30s'] },
+        ],
+        4: [
+          { d:'Poniedziałek – Siła góra', e:['Pompki – 3×12','Dipy na ławce – 3×10','Podciąganie – 3×5','Plank – 3×30s'] },
+          { d:'Wtorek – Bieg', e:['Trucht 25 min','Rozciąganie – 10 min'] },
+          { d:'Czwartek – Siła dół', e:['Przysiady – 4×15','Wykroki – 3×10 na nogę','Mostek – 3×15','Wspięcia – 3×20'] },
+          { d:'Piątek – HIIT', e:['Sprinty 6×50 m','Burpees – 3×8','Jumping jacks – 3×30s','Mountain climbers – 3×15'] },
+        ],
+        5: [
+          { d:'Poniedziałek – Siła góra', e:['Pompki – 3×12','Dipy na ławce – 3×10','Podciąganie – 3×5','Plank – 3×30s'] },
+          { d:'Wtorek – Bieg', e:['Trucht 25 min','Rozciąganie – 10 min'] },
+          { d:'Środa – Siła dół', e:['Przysiady – 4×15','Wykroki – 3×10 na nogę','Mostek – 3×15','Wspięcia – 3×20'] },
+          { d:'Czwartek – Lekki cardio', e:['Marsz szybki 30 min','Rozciąganie statyczne – 10 min'] },
+          { d:'Piątek – Full body HIIT', e:['Sprinty 6×50 m','Burpees – 3×8','Pompki – 3×12','Przysiady jump – 3×10'] },
+        ],
+      },
+    },
+    sredni: {
+      silownia: {
+        2: [
+          { d:'Poniedziałek – Push (Klatka/Barki/Triceps)', e:['Wyciskanie sztangi – 4×8','Wyciskanie hantli skos – 3×10','Unoszenie ramion bokiem – 3×12','Dipy – 3×12','Wyciskanie francuskie – 3×10'] },
+          { d:'Czwartek – Pull + Nogi (Plecy/Biceps/Nogi)', e:['Martwy ciąg – 4×6','Podciąganie szerokim uchwytem – 4×8','Wiosłowanie sztangą – 3×10','Uginanie biceps – 3×12','Przysiady – 4×8'] },
+        ],
+        3: [
+          { d:'Poniedziałek – Klatka + Triceps', e:['Wyciskanie sztangi – 4×8','Wyciskanie hantli skos – 3×10','Rozpiętki – 3×12','Dipy – 3×10','Wyciskanie francuskie – 3×12'] },
+          { d:'Środa – Plecy + Biceps', e:['Martwy ciąg – 4×6','Podciąganie – 4×8','Wiosłowanie sztangą – 3×10','Wiosłowanie hantlem – 3×10','Uginanie biceps – 3×12'] },
+          { d:'Piątek – Nogi + Barki', e:['Przysiady ze sztangą – 4×8','Leg press – 3×10','Wykroki – 3×12','Wyciskanie żołnierskie – 4×8','Unoszenie bokiem – 3×12'] },
+        ],
+        4: [
+          { d:'Poniedziałek – Klatka', e:['Wyciskanie sztangi – 4×8','Wyciskanie skos – 4×10','Rozpiętki – 3×12','Dipy obciążone – 3×10'] },
+          { d:'Wtorek – Plecy', e:['Martwy ciąg – 4×6','Podciąganie – 4×8','Wiosłowanie sztangą – 4×10','Ściąganie drążka wąskim uchwytem – 3×12'] },
+          { d:'Czwartek – Nogi', e:['Przysiady – 5×6','Leg press – 4×10','Wykroki z obciążeniem – 3×12','Uginanie nóg – 3×12','Wspięcia – 4×15'] },
+          { d:'Piątek – Barki + Ramiona', e:['Wyciskanie żołnierskie sztangą – 4×8','Unoszenie bokiem – 4×12','Uginanie biceps – 4×10','Prostowanie triceps – 4×10'] },
+        ],
+        5: [
+          { d:'Poniedziałek – Klatka', e:['Wyciskanie sztangi – 5×5','Wyciskanie skos – 4×8','Rozpiętki – 3×12','Dipy – 3×10'] },
+          { d:'Wtorek – Plecy', e:['Martwy ciąg – 4×5','Podciąganie – 4×8','Wiosłowanie – 4×10','Ściąganie drążka – 3×12'] },
+          { d:'Środa – Nogi', e:['Przysiady – 5×6','Leg press – 4×10','Wykroki – 3×12','Uginanie nóg – 3×12','Wspięcia – 4×15'] },
+          { d:'Czwartek – Barki', e:['Wyciskanie żołnierskie – 4×8','Unoszenie bokiem – 4×12','Wznosy barków – 4×15','Unoszenie w przód – 3×12'] },
+          { d:'Piątek – Ramiona + Core', e:['Uginanie biceps – 4×10','Hammer curl – 3×12','Wyciskanie francuskie – 4×10','Plank z obciążeniem – 4×45s'] },
+        ],
+      },
+      dom: {
+        2: [
+          { d:'Wtorek – Góra ciała', e:['Pompki – 4×15','Pompki na tricepsie – 3×15','Dipy na krześle – 3×15','Plank – 3×45s','Odwrotne pompki – 3×12'] },
+          { d:'Piątek – Dół + Core', e:['Przysiady – 4×20','Wykroki – 3×15 na nogę','Przysiady sumo – 3×20','Mostek biodrowy – 4×15','Mountain climbers – 3×20'] },
+        ],
+        3: [
+          { d:'Poniedziałek – Klatka/Triceps', e:['Pompki szerokie – 4×15','Pompki na tricepsie – 3×15','Pompki diamentowe – 3×12','Dipy na krześle – 3×15'] },
+          { d:'Środa – Nogi/Core', e:['Przysiady – 4×20','Wykroki – 3×15 na nogę','Przysiady sumo – 3×20','Mostek – 4×15','Plank – 3×45s'] },
+          { d:'Piątek – Full body HIIT', e:['Burpees – 4×12','Przysiady jump – 4×15','Mountain climbers – 4×20','High knees – 4×30s'] },
+        ],
+        4: [
+          { d:'Poniedziałek – Klatka/Triceps', e:['Pompki – 4×15','Pompki na tricepsie – 4×15','Pompki diamentowe – 3×12','Dipy na krześle – 3×15'] },
+          { d:'Wtorek – Nogi', e:['Przysiady – 5×20','Wykroki – 4×15 na nogę','Przysiady jump – 3×15','Mostek jednonóż – 3×12'] },
+          { d:'Czwartek – Plecy/Core', e:['Superman – 4×15','Odwrotne pompki – 4×12','Plank – 4×50s','Plank boczny – 3×35s','Hollow body – 3×30s'] },
+          { d:'Piątek – Full body HIIT', e:['Burpees – 4×12','Przysiady jump – 4×15','Mountain climbers – 4×20','High knees – 4×30s'] },
+        ],
+        5: [
+          { d:'Poniedziałek – Klatka/Triceps', e:['Pompki – 4×15','Pompki diamentowe – 4×12','Dipy na krześle – 3×15','Plank – 3×45s'] },
+          { d:'Wtorek – Nogi', e:['Przysiady – 5×20','Wykroki – 4×15','Przysiady jump – 3×15','Mostek jednonóż – 3×12'] },
+          { d:'Środa – Cardio', e:['High knees – 5×30s','Jumping jacks – 5×30s','Burpees – 4×10','Skip – 5 min'] },
+          { d:'Czwartek – Plecy/Core', e:['Superman – 4×15','Odwrotne pompki – 4×12','Plank – 4×50s','Plank boczny – 3×35s'] },
+          { d:'Piątek – Full body HIIT', e:['Burpees – 5×12','Przysiady jump – 4×15','Mountain climbers – 4×20','High knees – 4×30s'] },
+        ],
+      },
+      hantle: {
+        2: [
+          { d:'Poniedziałek – Góra ciała', e:['Wyciskanie hantli – 4×10','Wiosłowanie hantlem – 4×10','Unoszenie bokiem – 3×15','Uginanie biceps – 3×12','Wyciskanie francuskie – 3×12'] },
+          { d:'Czwartek – Dół + Core', e:['Przysiady z hantlami – 4×12','Martwy ciąg hantlami – 4×10','Wykroki z hantlami – 3×12','Swing hantlem – 3×15','Plank – 3×45s'] },
+        ],
+        3: [
+          { d:'Poniedziałek – Klatka/Triceps', e:['Wyciskanie hantli – 4×10','Rozpiętki hantlami – 3×12','Wyciskanie francuskie – 3×12','Pompki – 3×15'] },
+          { d:'Środa – Plecy/Biceps', e:['Wiosłowanie hantlem – 4×10','Odwrotne rozpiętki – 3×12','Uginanie biceps – 4×12','Hammer curl – 3×12'] },
+          { d:'Piątek – Nogi/Barki', e:['Przysiady z hantlami – 4×12','Martwy ciąg hantlami – 4×10','Wykroki – 3×12','Wyciskanie żołnierskie – 4×10','Unoszenie bokiem – 3×12'] },
+        ],
+        4: [
+          { d:'Poniedziałek – Klatka', e:['Wyciskanie hantli – 4×10','Rozpiętki – 4×12','Wyciskanie skos hantlami – 3×12','Pompki – 3×15'] },
+          { d:'Wtorek – Plecy', e:['Wiosłowanie hantlem – 4×10','Martwy ciąg hantlami – 4×8','Odwrotne rozpiętki – 3×12','Superman – 3×12'] },
+          { d:'Czwartek – Nogi', e:['Przysiady z hantlami – 4×12','Wykroki – 4×12','Swing hantlem – 3×15','Mostek jednonóż – 3×12','Wspięcia – 4×15'] },
+          { d:'Piątek – Barki/Ramiona', e:['Wyciskanie żołnierskie – 4×10','Unoszenie bokiem – 4×12','Uginanie biceps – 4×10','Wyciskanie francuskie – 4×10'] },
+        ],
+        5: [
+          { d:'Poniedziałek – Klatka', e:['Wyciskanie hantli – 4×10','Rozpiętki – 4×12','Wyciskanie skos – 3×12','Pompki – 3×15'] },
+          { d:'Wtorek – Plecy', e:['Wiosłowanie hantlem – 4×10','Martwy ciąg hantlami – 4×8','Odwrotne rozpiętki – 3×12','Superman – 3×12'] },
+          { d:'Środa – Nogi', e:['Przysiady z hantlami – 5×12','Wykroki – 4×12','Swing – 3×15','Mostek jednonóż – 3×12','Wspięcia – 4×15'] },
+          { d:'Czwartek – Barki', e:['Wyciskanie żołnierskie – 4×10','Unoszenie bokiem – 4×12','Wznosy barków z hantlami – 3×15','Unoszenie w przód – 3×12'] },
+          { d:'Piątek – Ramiona/Core', e:['Uginanie biceps – 4×10','Hammer curl – 3×12','Wyciskanie francuskie – 4×10','Plank – 4×50s','Rosyjskie skręty z hantlem – 3×20'] },
+        ],
+      },
+      zewnatrz: {
+        2: [
+          { d:'Wtorek – Siła', e:['Pompki – 4×15','Podciąganie – 4×8','Dipy na ławce – 4×12','Przysiady – 4×20','Plank – 3×45s'] },
+          { d:'Sobota – Bieg + HIIT', e:['Bieg 4 km','Sprinty 6×60 m','Burpees – 3×10','Mountain climbers – 3×20'] },
+        ],
+        3: [
+          { d:'Poniedziałek – Siła góra', e:['Pompki – 4×15','Podciąganie – 4×8','Dipy na ławce – 4×12','Plank – 3×45s'] },
+          { d:'Środa – Bieg', e:['Bieg ciągły 4–5 km','Rozciąganie dynamiczne – 10 min'] },
+          { d:'Piątek – Siła dół + HIIT', e:['Przysiady jump – 4×15','Wykroki – 4×12','Sprinty 6×50 m','Burpees – 3×10'] },
+        ],
+        4: [
+          { d:'Poniedziałek – Siła góra', e:['Pompki – 4×15','Podciąganie – 4×8','Dipy – 4×12','Plank – 3×45s'] },
+          { d:'Wtorek – Bieg', e:['Bieg ciągły 5 km','Rozciąganie – 10 min'] },
+          { d:'Czwartek – Siła dół', e:['Przysiady jump – 4×15','Wykroki – 4×12','Mostek jednonóż – 3×12','Wspięcia – 4×20'] },
+          { d:'Piątek – HIIT', e:['Sprinty 8×60 m','Burpees – 4×10','Mountain climbers – 4×20','High knees – 4×30s'] },
+        ],
+        5: [
+          { d:'Poniedziałek – Siła góra', e:['Pompki – 5×15','Podciąganie – 4×8','Dipy – 4×12','Plank – 4×45s'] },
+          { d:'Wtorek – Bieg', e:['Bieg ciągły 5 km'] },
+          { d:'Środa – Siła dół', e:['Przysiady jump – 4×15','Wykroki – 4×12','Mostek jednonóż – 3×12','Wspięcia – 4×20'] },
+          { d:'Czwartek – Interwały', e:['Sprinty 8×80 m','Burpees – 4×10','Mountain climbers – 4×20'] },
+          { d:'Piątek – Full body', e:['Pompki – 4×15','Przysiady – 4×20','Dipy – 3×12','Plank – 3×50s'] },
+        ],
+      },
+    },
+    zaawansowany: {
+      silownia: {
+        2: [
+          { d:'Poniedziałek – Push heavy', e:['Wyciskanie sztangi 5×5','Wyciskanie skos 4×8','Dipy obciążone 4×10','Unoszenie bokiem 4×15','Wyciskanie francuskie 4×10'] },
+          { d:'Czwartek – Pull + Nogi', e:['Martwy ciąg 5×4','Podciąganie obciążone 5×6','Wiosłowanie 4×8','Przysiady z pauzą 5×5','Uginanie nóg 4×10'] },
+        ],
+        3: [
+          { d:'Poniedziałek – Klatka + Triceps', e:['Wyciskanie sztangi 5×5','Rozpiętki 4×12','Dipy obciążone 4×10','Wyciskanie francuskie 4×10','Pompki na pierścieniach 3×12'] },
+          { d:'Środa – Plecy + Biceps', e:['Martwy ciąg 5×4','Podciąganie obciążone 5×6','Wiosłowanie sztangą 4×8','Wiosłowanie hantlem 4×10','Uginanie biceps 4×10'] },
+          { d:'Piątek – Nogi + Barki', e:['Przysiady 5×5','Leg press 4×10','Wykroki z obciążeniem 3×12','Wyciskanie żołnierskie 4×6','Unoszenie bokiem 4×12'] },
+        ],
+        4: [
+          { d:'Poniedziałek – Klatka', e:['Wyciskanie sztangi 5×5','Wyciskanie skos 4×8','Rozpiętki 4×12','Dipy obciążone 4×10'] },
+          { d:'Wtorek – Plecy', e:['Martwy ciąg 5×4','Podciąganie obciążone 5×6','Wiosłowanie 4×8','Ściąganie drążka wąski uchwyt 4×10'] },
+          { d:'Czwartek – Nogi', e:['Przysiady 6×5','Leg press 4×8','Wykroki z obciążeniem 4×10','Uginanie nóg 4×10','Wspięcia obciążone 5×15'] },
+          { d:'Piątek – Barki + Ramiona', e:['Wyciskanie żołnierskie 5×5','Unoszenie bokiem 4×12','Uginanie biceps 4×8','Prostowanie triceps 4×8'] },
+        ],
+        5: [
+          { d:'Poniedziałek – Klatka', e:['Wyciskanie sztangi 5×5','Wyciskanie skos 4×8','Rozpiętki 4×12','Dipy obciążone 4×10'] },
+          { d:'Wtorek – Plecy', e:['Martwy ciąg 5×4','Podciąganie obciążone 5×6','Wiosłowanie 4×8','Ściąganie drążka 4×10'] },
+          { d:'Środa – Nogi', e:['Przysiady 6×5','Leg press 4×8','Wykroki 4×10','Uginanie nóg 4×10','Wspięcia 5×15'] },
+          { d:'Czwartek – Barki', e:['Wyciskanie żołnierskie 5×5','Unoszenie bokiem 4×12','Wznosy barków 4×15','Unoszenie w przód 3×12'] },
+          { d:'Piątek – Ramiona + Core', e:['Uginanie biceps 4×8','Hammer curl 3×10','Wyciskanie francuskie 4×8','Plank obciążony 4×60s','Ab wheel 4×10'] },
+        ],
+      },
+      dom: {
+        2: [
+          { d:'Wtorek – Siła góra', e:['Pompki jednoręczne 4×8 na stronę','Pompki z nóg na podwyższeniu 4×12','Dipy na dwóch krzesłach 4×15','Plank z uniesieniem 4×45s'] },
+          { d:'Piątek – Siła dół + Core', e:['Pistolety (przysiady jednonóż) 4×6 na nogę','Wykroki bułgarskie 4×10','Mostek jednonóż 4×15','Mountain climbers 4×30s','L-sit (próba) 3×10s'] },
+        ],
+        3: [
+          { d:'Poniedziałek – Klatka/Triceps', e:['Pompki jednoręczne 4×8','Pompki z nóg na podwyższeniu 4×12','Dipy 4×15','Pompki z klaskaniem 3×8'] },
+          { d:'Środa – Nogi/Core', e:['Pistolety 4×6 na nogę','Wykroki bułgarskie 4×10','Mostek jednonóż 4×15','Hollow body 4×30s','Ab wheel 3×10'] },
+          { d:'Piątek – Full body HIIT', e:['Burpees z wyskokiem 5×12','Przysiady jump 5×15','Mountain climbers 5×25','High knees 5×30s'] },
+        ],
+        4: [
+          { d:'Poniedziałek – Klatka/Triceps', e:['Pompki jednoręczne 4×8','Pompki podwyższone 4×12','Dipy 4×15','Pompki z klaskaniem 3×8'] },
+          { d:'Wtorek – Nogi', e:['Pistolety 4×6 na nogę','Wykroki bułgarskie 4×10','Przysiady sumo jump 4×12','Mostek jednonóż 4×15'] },
+          { d:'Czwartek – Plecy/Core', e:['Podciąganie (jeśli drążek) 5×8','Superman z obciążeniem 4×15','Plank z uniesieniem 4×50s','Hollow body 4×30s','Ab wheel 4×10'] },
+          { d:'Piątek – Full body HIIT', e:['Burpees z wyskokiem 5×12','Przysiady jump 5×15','Mountain climbers 5×25','High knees 5×30s'] },
+        ],
+        5: [
+          { d:'Poniedziałek – Klatka/Triceps', e:['Pompki jednoręczne 4×8','Pompki podwyższone 4×12','Dipy 4×15','Pompki z klaskaniem 3×8'] },
+          { d:'Wtorek – Nogi', e:['Pistolety 4×6 na nogę','Wykroki bułgarskie 4×10','Przysiady sumo jump 4×12','Mostek jednonóż 4×15'] },
+          { d:'Środa – Cardio HIIT', e:['Burpees z wyskokiem 5×12','High knees 5×30s','Jumping jacks 5×30s','Sprint w miejscu 5×20s'] },
+          { d:'Czwartek – Plecy/Core', e:['Podciąganie 5×8','Superman 4×15','Plank z uniesieniem 4×50s','Ab wheel 4×10'] },
+          { d:'Piątek – Full body siła', e:['Pistolety 4×6','Pompki jednoręczne 4×8','Burpees z wyskokiem 4×10','L-sit 3×10s'] },
+        ],
+      },
+      hantle: {
+        2: [
+          { d:'Poniedziałek – Push ciężki', e:['Wyciskanie hantli 5×6','Rozpiętki 4×10','Wyciskanie żołnierskie 4×8','Wyciskanie francuskie 4×10','Dipy na krzesłach 3×15'] },
+          { d:'Czwartek – Pull + Nogi', e:['Martwy ciąg hantlami 5×6','Wiosłowanie hantlem 4×8','Odwrotne rozpiętki 4×12','Przysiady hantlami 5×10','Swing 4×15'] },
+        ],
+        3: [
+          { d:'Poniedziałek – Klatka/Triceps', e:['Wyciskanie hantli 5×6','Rozpiętki 4×10','Wyciskanie skos 4×10','Wyciskanie francuskie 4×10','Dipy 3×15'] },
+          { d:'Środa – Plecy/Biceps', e:['Martwy ciąg hantlami 5×6','Wiosłowanie hantlem 4×8','Odwrotne rozpiętki 4×12','Uginanie biceps 4×10','Hammer curl 4×10'] },
+          { d:'Piątek – Nogi/Barki', e:['Przysiady hantlami 5×10','Martwy ciąg rumuński 4×10','Wykroki bułgarskie 4×10','Wyciskanie żołnierskie 4×8','Unoszenie bokiem 4×12'] },
+        ],
+        4: [
+          { d:'Poniedziałek – Klatka', e:['Wyciskanie hantli 5×6','Rozpiętki 4×10','Wyciskanie skos 4×10','Pompki 3×15'] },
+          { d:'Wtorek – Plecy', e:['Martwy ciąg hantlami 5×6','Wiosłowanie hantlem 4×8','Odwrotne rozpiętki 4×12','Superman z hantlami 3×12'] },
+          { d:'Czwartek – Nogi', e:['Przysiady hantlami 5×10','Martwy ciąg rumuński 4×10','Wykroki bułgarskie 4×10','Swing 4×15','Wspięcia z hantlami 5×15'] },
+          { d:'Piątek – Barki/Ramiona', e:['Wyciskanie żołnierskie 4×8','Unoszenie bokiem 4×12','Uginanie biceps 4×10','Hammer curl 3×10','Wyciskanie francuskie 4×10'] },
+        ],
+        5: [
+          { d:'Poniedziałek – Klatka', e:['Wyciskanie hantli 5×6','Rozpiętki 4×10','Wyciskanie skos 4×10','Pompki 3×15'] },
+          { d:'Wtorek – Plecy', e:['Martwy ciąg hantlami 5×6','Wiosłowanie hantlem 4×8','Odwrotne rozpiętki 4×12','Superman 3×12'] },
+          { d:'Środa – Nogi', e:['Przysiady hantlami 5×10','Martwy ciąg rumuński 4×10','Wykroki bułgarskie 4×10','Swing 4×15','Wspięcia 5×15'] },
+          { d:'Czwartek – Barki', e:['Wyciskanie żołnierskie 4×8','Unoszenie bokiem 4×12','Wznosy barków 4×15','Arnold press 3×10'] },
+          { d:'Piątek – Ramiona/Core', e:['Uginanie biceps 4×10','Hammer curl 3×10','Wyciskanie francuskie 4×10','Plank z hantlem 4×50s','Rosyjskie skręty 4×20'] },
+        ],
+      },
+      zewnatrz: {
+        2: [
+          { d:'Wtorek – Siła', e:['Podciąganie szerokie 5×8','Pompki jednoręczne 4×8','Dipy na ławce 4×15','Pistolety 4×6 na nogę','Plank z uniesieniem 4×45s'] },
+          { d:'Sobota – Bieg + HIIT', e:['Bieg 6 km','Sprinty 8×80 m','Burpees z wyskokiem 4×12','Mountain climbers 4×25'] },
+        ],
+        3: [
+          { d:'Poniedziałek – Siła', e:['Podciąganie 5×8','Pompki jednoręczne 4×8','Dipy 4×15','Pistolety 4×6 na nogę'] },
+          { d:'Środa – Bieg', e:['Bieg ciągły 6–8 km'] },
+          { d:'Piątek – HIIT', e:['Sprinty 10×80 m','Burpees z wyskokiem 5×12','Mountain climbers 5×25','Hollow body 4×30s'] },
+        ],
+        4: [
+          { d:'Poniedziałek – Siła góra', e:['Podciąganie 5×8','Pompki jednoręczne 4×8','Dipy 4×15','Plank z uniesieniem 4×50s'] },
+          { d:'Wtorek – Bieg', e:['Bieg ciągły 6 km'] },
+          { d:'Czwartek – Siła dół', e:['Pistolety 4×6 na nogę','Wykroki bułgarskie 4×10','Przysiady jump 4×15','Mostek jednonóż 4×15'] },
+          { d:'Piątek – HIIT', e:['Sprinty 10×80 m','Burpees z wyskokiem 5×12','Mountain climbers 5×25','High knees 5×30s'] },
+        ],
+        5: [
+          { d:'Poniedziałek – Siła góra', e:['Podciąganie 5×8','Pompki jednoręczne 4×8','Dipy 4×15','Plank z uniesieniem 4×50s'] },
+          { d:'Wtorek – Bieg', e:['Bieg ciągły 6–7 km'] },
+          { d:'Środa – Siła dół', e:['Pistolety 4×6 na nogę','Wykroki bułgarskie 4×10','Przysiady jump 4×15','Mostek jednonóż 4×15'] },
+          { d:'Czwartek – Interwały', e:['Sprinty 10×80 m','Burpees 5×12','Mountain climbers 5×25'] },
+          { d:'Piątek – Full body siła', e:['Podciąganie 4×8','Pompki jednoręczne 4×8','Pistolety 4×6','Plank z uniesieniem 4×50s'] },
+        ],
+      },
+    },
+  },
+};
+
+// Dla uproszczenia: redukcja, siła i zdrowie = modyfikacje opisów
+// Używamy tej samej struktury ale z odpowiednimi ćwiczeniami
+
+// Redukcja: więcej cardio, mniejsze obciążenia, więcej powtórzeń
+T.redukcja = {
+  poczatkujacy: {
+    silownia: {
+      2: [
+        { d:'Poniedziałek – Full body + Cardio', e:['Bieżnia trucht 10 min','Wyciskanie na maszynie – 3×15','Ściąganie drążka – 3×15','Leg press – 3×15','Plank – 3×30s'] },
+        { d:'Czwartek – Full body + Cardio', e:['Rower stacjonarny 15 min','Przysiady z ciężarem ciała – 4×15','Wiosłowanie na maszynie – 3×15','Unoszenie nóg – 3×15','Deska – 3×30s'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Góra ciała', e:['Bieżnia 8 min','Wyciskanie maszyna – 3×15','Ściąganie drążka – 3×15','Unoszenie ramion – 3×15','Dipy asystowane – 3×12'] },
+        { d:'Środa – Dół ciała', e:['Rower 10 min','Leg press – 4×15','Uginanie nóg – 3×15','Prostowanie nóg – 3×15','Wspięcia – 4×20'] },
+        { d:'Piątek – Full body + Cardio', e:['Bieżnia 15 min','Przysiady – 3×15','Wiosłowanie maszyna – 3×15','Plank – 3×30s'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Klatka/Triceps', e:['Wyciskanie maszyna – 3×15','Rozpiętki linka – 3×15','Dipy asystowane – 3×12','Bieżnia 10 min'] },
+        { d:'Wtorek – Plecy/Biceps', e:['Ściąganie drążka – 3×15','Wiosłowanie maszyna – 3×15','Uginanie biceps maszyna – 3×15','Rower 10 min'] },
+        { d:'Czwartek – Nogi', e:['Leg press – 4×15','Uginanie nóg – 3×15','Prostowanie nóg – 3×15','Wspięcia – 4×20'] },
+        { d:'Piątek – Cardio + Core', e:['Bieżnia 20 min','Plank – 3×30s','Unoszenie nóg w leżeniu – 3×15','Rower 10 min'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Klatka', e:['Wyciskanie maszyna – 3×15','Rozpiętki linka – 3×15','Dipy asystowane – 3×12'] },
+        { d:'Wtorek – Plecy', e:['Ściąganie drążka – 3×15','Wiosłowanie maszyna – 3×15','Uginanie biceps – 3×15'] },
+        { d:'Środa – Cardio', e:['Bieżnia trucht 25 min','Rower 10 min'] },
+        { d:'Czwartek – Nogi', e:['Leg press – 4×15','Uginanie nóg – 3×15','Prostowanie nóg – 3×15','Wspięcia – 4×20'] },
+        { d:'Piątek – Full body + Core', e:['Przysiady – 3×15','Wiosłowanie maszyna – 3×15','Plank – 3×30s','Bieżnia 15 min'] },
+      ],
+    },
+    dom: {
+      2: [
+        { d:'Wtorek – Full body', e:['Jumping jacks 5 min rozgrzewka','Pompki – 3×10','Przysiady – 3×15','Mostek – 3×15','Burpees – 3×8','Plank – 3×30s'] },
+        { d:'Piątek – Cardio + Core', e:['High knees 3 min','Mountain climbers – 3×20','Jumping jacks – 3×30s','Plank – 3×30s','Skoki na skakance 5 min'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Full body siła', e:['Pompki – 3×10','Przysiady – 3×15','Mostek – 3×15','Plank – 3×30s','Dipy na krześle – 3×10'] },
+        { d:'Środa – Cardio HIIT', e:['Jumping jacks – 4×30s','High knees – 4×30s','Burpees – 3×8','Mountain climbers – 3×20'] },
+        { d:'Piątek – Full body siła', e:['Pompki – 3×12','Wykroki – 3×10 na nogę','Odwrotne pompki – 3×10','Plank – 3×35s'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła góra', e:['Pompki – 3×12','Pompki triceps – 3×10','Dipy na krześle – 3×10','Plank – 3×35s'] },
+        { d:'Wtorek – Cardio HIIT', e:['Jumping jacks – 4×30s','High knees – 4×30s','Burpees – 3×10','Mountain climbers – 3×20'] },
+        { d:'Czwartek – Siła dół', e:['Przysiady – 4×15','Wykroki – 3×12 na nogę','Mostek – 3×15','Wspięcia – 3×20'] },
+        { d:'Piątek – Cardio + Core', e:['High knees 10 min','Plank – 3×35s','Unoszenie nóg – 3×15','Jumping jacks 10 min'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła góra', e:['Pompki – 3×12','Pompki triceps – 3×10','Dipy – 3×10','Plank – 3×35s'] },
+        { d:'Wtorek – Cardio', e:['Jumping jacks – 5×30s','High knees – 5×30s','Burpees – 3×10','Skip 5 min'] },
+        { d:'Środa – Siła dół', e:['Przysiady – 4×15','Wykroki – 3×12 na nogę','Mostek – 3×15','Wspięcia – 3×20'] },
+        { d:'Czwartek – Cardio HIIT', e:['Mountain climbers – 4×20','Jumping jacks – 4×30s','Burpees – 3×10','High knees – 4×30s'] },
+        { d:'Piątek – Full body', e:['Pompki – 3×12','Przysiady – 3×15','Plank – 3×35s','Burpees – 3×8'] },
+      ],
+    },
+    hantle: {
+      2: [
+        { d:'Wtorek – Full body', e:['Swing hantlem – 3×15','Wyciskanie hantli – 3×12','Przysiady z hantlami – 3×15','Wiosłowanie hantlem – 3×12','Plank – 3×30s'] },
+        { d:'Piątek – Cardio + Core', e:['Swing hantlem – 4×15','Wykroki z hantlami – 3×12','Rosyjskie skręty z hantlem – 3×15','Plank – 3×30s'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Góra ciała', e:['Wyciskanie hantli – 3×12','Wiosłowanie hantlem – 3×12','Unoszenie bokiem – 3×15','Uginanie biceps – 3×12'] },
+        { d:'Środa – Dół + Cardio', e:['Swing hantlem – 4×15','Przysiady z hantlami – 3×15','Wykroki – 3×12 na nogę','Mostek – 3×15'] },
+        { d:'Piątek – Full body', e:['Swing hantlem – 4×15','Wyciskanie hantli – 3×12','Przysiady – 3×15','Plank – 3×30s'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Góra ciała', e:['Wyciskanie hantli – 3×12','Wiosłowanie hantlem – 3×12','Unoszenie bokiem – 3×15','Uginanie biceps – 3×12'] },
+        { d:'Wtorek – Cardio z hantlami', e:['Swing hantlem – 5×15','Goblet squat – 4×15','Rosyjskie skręty – 4×15'] },
+        { d:'Czwartek – Dół ciała', e:['Przysiady z hantlami – 4×15','Wykroki – 3×12 na nogę','Mostek z hantlem – 3×15','Wspięcia – 3×20'] },
+        { d:'Piątek – Full body obwodowy', e:['Swing – 4×15','Wyciskanie – 3×12','Przysiady – 3×15','Plank – 3×30s'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Góra ciała', e:['Wyciskanie hantli – 3×12','Wiosłowanie hantlem – 3×12','Unoszenie bokiem – 3×15','Uginanie biceps – 3×12'] },
+        { d:'Wtorek – Cardio z hantlami', e:['Swing hantlem – 5×15','Goblet squat – 4×15','Rosyjskie skręty – 4×15'] },
+        { d:'Środa – Dół ciała', e:['Przysiady z hantlami – 4×15','Wykroki – 3×12','Mostek z hantlem – 3×15','Wspięcia – 3×20'] },
+        { d:'Czwartek – Cardio', e:['Swing hantlem – 5×15','Mountain climbers – 4×20','Jumping jacks – 4×30s'] },
+        { d:'Piątek – Full body', e:['Swing – 4×15','Wyciskanie – 3×12','Przysiady – 3×15','Plank – 3×30s'] },
+      ],
+    },
+    zewnatrz: {
+      2: [
+        { d:'Wtorek – Bieg + Siła', e:['Trucht 20 min','Pompki – 3×10','Przysiady – 3×15','Dipy na ławce – 3×10','Plank – 3×30s'] },
+        { d:'Sobota – Cardio', e:['Bieg 3 km','Jumping jacks – 3×30s','Burpees – 3×8','Marsz szybki 10 min'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła', e:['Pompki – 3×10','Przysiady – 3×15','Dipy na ławce – 3×10','Plank – 3×30s'] },
+        { d:'Środa – Bieg', e:['Trucht 25 min','Rozciąganie – 10 min'] },
+        { d:'Piątek – HIIT', e:['Sprinty 5×50 m','Burpees – 3×8','Jumping jacks – 3×30s','Mountain climbers – 3×15'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła', e:['Pompki – 3×12','Przysiady – 3×15','Dipy – 3×10','Plank – 3×30s'] },
+        { d:'Wtorek – Bieg', e:['Trucht 25–30 min'] },
+        { d:'Czwartek – Siła', e:['Pompki – 3×12','Wykroki – 3×12','Mostek – 3×15','Plank – 3×30s'] },
+        { d:'Piątek – HIIT', e:['Sprinty 6×50 m','Burpees – 3×10','Jumping jacks – 4×30s'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła', e:['Pompki – 3×12','Przysiady – 3×15','Dipy – 3×10','Plank – 3×30s'] },
+        { d:'Wtorek – Bieg', e:['Trucht 25 min'] },
+        { d:'Środa – Siła', e:['Pompki – 3×12','Wykroki – 3×12','Mostek – 3×15','Plank – 3×30s'] },
+        { d:'Czwartek – Bieg', e:['Trucht 30 min'] },
+        { d:'Piątek – HIIT', e:['Sprinty 6×50 m','Burpees – 3×10','Jumping jacks – 4×30s','Mountain climbers – 3×20'] },
+      ],
+    },
+  },
+  sredni: {
+    silownia: {
+      2: [
+        { d:'Poniedziałek – Full body obwodowy', e:['Bieżnia 10 min','Wyciskanie sztangi – 4×12','Martwy ciąg – 4×10','Przysiady – 4×12','Plank – 4×45s','Rower 10 min'] },
+        { d:'Czwartek – Full body obwodowy', e:['Rower 10 min','Wiosłowanie – 4×12','Leg press – 4×12','Dipy – 4×12','Unoszenie nóg – 4×15','Bieżnia 10 min'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Góra ciała', e:['Wyciskanie sztangi – 4×12','Podciąganie – 4×8','Wyciskanie żołnierskie – 3×12','Uginanie biceps – 3×12','Dipy – 3×12'] },
+        { d:'Środa – Dół + Cardio', e:['Przysiady – 4×12','Leg press – 4×12','Wykroki – 3×12','Bieżnia 20 min'] },
+        { d:'Piątek – Full body + Cardio', e:['Wiosłowanie – 4×12','Wyciskanie maszyna – 4×12','Plank – 4×45s','Rower 20 min'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Klatka/Triceps', e:['Wyciskanie sztangi – 4×10','Rozpiętki – 4×12','Dipy – 4×12','Bieżnia 15 min po treningu'] },
+        { d:'Wtorek – Plecy/Biceps', e:['Podciąganie – 4×8','Wiosłowanie – 4×10','Uginanie biceps – 4×12','Rower 15 min po treningu'] },
+        { d:'Czwartek – Nogi + Cardio', e:['Przysiady – 4×12','Leg press – 4×12','Wykroki – 3×12','Bieżnia 20 min'] },
+        { d:'Piątek – Barki + Core', e:['Wyciskanie żołnierskie – 4×10','Unoszenie bokiem – 4×12','Plank – 4×50s','Rower 15 min'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Klatka', e:['Wyciskanie sztangi – 4×10','Rozpiętki – 4×12','Dipy – 4×12'] },
+        { d:'Wtorek – Plecy', e:['Podciąganie – 4×8','Wiosłowanie – 4×10','Uginanie biceps – 4×12'] },
+        { d:'Środa – Cardio', e:['Bieżnia 30 min lub rower 30 min'] },
+        { d:'Czwartek – Nogi', e:['Przysiady – 4×12','Leg press – 4×12','Wykroki – 3×12','Wspięcia – 4×15'] },
+        { d:'Piątek – Barki + Core', e:['Wyciskanie żołnierskie – 4×10','Unoszenie bokiem – 4×12','Plank – 4×50s','Rower 15 min'] },
+      ],
+    },
+    dom: {
+      2: [
+        { d:'Wtorek – Full body siła', e:['Pompki – 4×15','Przysiady – 4×20','Dipy – 4×12','Mostek jednonóż – 3×12','Plank – 3×45s'] },
+        { d:'Piątek – Cardio HIIT', e:['Burpees – 5×12','High knees – 5×30s','Jumping jacks – 5×30s','Mountain climbers – 5×20','Przysiady jump – 4×15'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła', e:['Pompki – 4×15','Dipy – 3×15','Przysiady – 4×20','Plank – 3×45s'] },
+        { d:'Środa – Cardio HIIT', e:['Burpees – 5×12','High knees – 5×30s','Mountain climbers – 4×20','Jumping jacks – 4×30s'] },
+        { d:'Piątek – Siła + Core', e:['Pompki – 4×15','Wykroki – 4×15','Mostek jednonóż – 3×12','Hollow body – 3×30s','Plank – 3×50s'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła góra', e:['Pompki – 4×15','Pompki diamentowe – 3×12','Dipy – 3×15','Plank – 3×45s'] },
+        { d:'Wtorek – HIIT', e:['Burpees – 5×12','High knees – 5×30s','Mountain climbers – 4×20','Przysiady jump – 4×15'] },
+        { d:'Czwartek – Siła dół', e:['Przysiady – 5×20','Wykroki – 4×15','Mostek jednonóż – 3×12','Przysiady sumo – 3×20'] },
+        { d:'Piątek – HIIT + Core', e:['Jumping jacks – 5×30s','Burpees – 4×10','Plank – 4×50s','Hollow body – 3×30s'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła góra', e:['Pompki – 4×15','Pompki diamentowe – 3×12','Dipy – 3×15','Plank – 3×45s'] },
+        { d:'Wtorek – HIIT', e:['Burpees – 5×12','High knees – 5×30s','Mountain climbers – 4×20'] },
+        { d:'Środa – Siła dół', e:['Przysiady – 5×20','Wykroki – 4×15','Mostek jednonóż – 3×12','Wspięcia – 4×20'] },
+        { d:'Czwartek – Cardio', e:['Jumping jacks – 5×30s','High knees – 5×30s','Skip 10 min'] },
+        { d:'Piątek – Full body + Core', e:['Pompki – 4×15','Przysiady – 4×20','Burpees – 4×10','Plank – 4×50s'] },
+      ],
+    },
+    hantle: {
+      2: [
+        { d:'Wtorek – Full body', e:['Swing hantlem – 5×15','Wyciskanie hantli – 4×12','Przysiady z hantlami – 4×15','Wiosłowanie hantlem – 4×12','Plank – 4×45s'] },
+        { d:'Piątek – Cardio + siła', e:['Swing – 5×15','Goblet squat – 4×15','Rosyjskie skręty z hantlem – 4×20','Wyciskanie żołnierskie – 4×12'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Góra ciała', e:['Wyciskanie hantli – 4×12','Wiosłowanie hantlem – 4×12','Wyciskanie żołnierskie – 3×12','Uginanie biceps – 3×12'] },
+        { d:'Środa – Dół + Cardio', e:['Swing hantlem – 5×15','Goblet squat – 4×15','Wykroki z hantlami – 3×12','Mostek z hantlem – 3×15'] },
+        { d:'Piątek – Full body obwodowy', e:['Swing – 5×15','Wyciskanie – 4×12','Przysiady – 4×15','Rosyjskie skręty – 4×15'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Góra ciała', e:['Wyciskanie hantli – 4×12','Wiosłowanie hantlem – 4×12','Wyciskanie żołnierskie – 3×12','Uginanie – 3×12'] },
+        { d:'Wtorek – Cardio z hantlami', e:['Swing – 6×15','Goblet squat – 4×15','Rosyjskie skręty – 4×15'] },
+        { d:'Czwartek – Dół ciała', e:['Przysiady z hantlami – 4×15','Martwy ciąg rumuński – 4×12','Wykroki – 4×12','Swing – 3×15'] },
+        { d:'Piątek – Full body obwodowy', e:['Swing – 5×15','Wyciskanie – 4×12','Przysiady – 4×15','Plank – 4×45s'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Góra ciała', e:['Wyciskanie hantli – 4×12','Wiosłowanie hantlem – 4×12','Wyciskanie żołnierskie – 3×12','Uginanie – 3×12'] },
+        { d:'Wtorek – Cardio z hantlami', e:['Swing – 6×15','Goblet squat – 4×15','Rosyjskie skręty – 4×15'] },
+        { d:'Środa – Dół ciała', e:['Przysiady z hantlami – 4×15','Martwy ciąg rumuński – 4×12','Wykroki – 4×12'] },
+        { d:'Czwartek – HIIT z hantlami', e:['Swing – 6×15','Thrusters (przysiad + wycisk) – 4×12','Rosyjskie skręty – 4×15'] },
+        { d:'Piątek – Full body', e:['Swing – 5×15','Wyciskanie – 4×12','Przysiady – 4×15','Plank – 4×45s'] },
+      ],
+    },
+    zewnatrz: {
+      2: [
+        { d:'Wtorek – Siła + Bieg', e:['Pompki – 4×15','Podciąganie – 4×8','Dipy – 4×12','Przysiady – 4×20','Bieg 3 km'] },
+        { d:'Sobota – HIIT', e:['Sprinty 8×60 m','Burpees – 5×12','Mountain climbers – 4×20','High knees – 4×30s'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła', e:['Pompki – 4×15','Podciąganie – 4×8','Dipy – 4×12','Przysiady – 4×20'] },
+        { d:'Środa – Bieg', e:['Bieg ciągły 5 km'] },
+        { d:'Piątek – HIIT', e:['Sprinty 8×60 m','Burpees – 5×12','Jumping jacks – 4×30s','Mountain climbers – 4×20'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła', e:['Pompki – 4×15','Podciąganie – 4×8','Dipy – 4×12','Plank – 4×45s'] },
+        { d:'Wtorek – Bieg', e:['Bieg ciągły 5 km'] },
+        { d:'Czwartek – Siła dół', e:['Przysiady jump – 4×15','Wykroki – 4×12','Mostek jednonóż – 3×12','Wspięcia – 4×20'] },
+        { d:'Piątek – HIIT', e:['Sprinty 8×60 m','Burpees – 5×12','Mountain climbers – 4×20','High knees – 4×30s'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła', e:['Pompki – 4×15','Podciąganie – 4×8','Dipy – 4×12','Plank – 4×45s'] },
+        { d:'Wtorek – Bieg', e:['Bieg ciągły 5 km'] },
+        { d:'Środa – Siła dół', e:['Przysiady jump – 4×15','Wykroki – 4×12','Mostek jednonóż – 3×12'] },
+        { d:'Czwartek – Bieg', e:['Bieg + interwały: 3 km ciągłe + 4×200 m sprint'] },
+        { d:'Piątek – Full body HIIT', e:['Sprinty 8×60 m','Burpees – 5×12','Pompki – 4×15','Mountain climbers – 4×20'] },
+      ],
+    },
+  },
+  zaawansowany: {
+    silownia: {
+      2: [
+        { d:'Poniedziałek – Full body obwodowy ciężki', e:['Bieżnia 5 min rozgrzewka','Wyciskanie sztangi – 5×10','Martwy ciąg – 5×8','Przysiady – 5×10','Podciąganie – 4×10','Bieżnia 15 min po treningu'] },
+        { d:'Czwartek – Full body siłowo-cardio', e:['Rower 5 min','Wiosłowanie – 5×10','Leg press – 5×12','Dipy – 4×12','Plank – 4×60s','Rower 20 min'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Push + Cardio', e:['Wyciskanie sztangi – 5×8','Wyciskanie skos – 4×10','Dipy obciążone – 4×10','Wyciskanie żołnierskie – 4×8','Bieżnia 15 min'] },
+        { d:'Środa – Pull + Nogi', e:['Martwy ciąg – 5×6','Podciąganie – 5×8','Wiosłowanie – 4×10','Przysiady – 4×10','Rower 15 min'] },
+        { d:'Piątek – Full body HIIT + Siła', e:['Kettlebell swing – 5×15','Burpees z hantlem – 4×12','Box jump – 4×10','Plank z obciążeniem – 4×60s'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Klatka/Triceps', e:['Wyciskanie sztangi – 5×6','Rozpiętki – 4×12','Dipy obciążone – 4×10','Wyciskanie francuskie – 4×10'] },
+        { d:'Wtorek – Plecy/Biceps + Cardio', e:['Martwy ciąg – 5×5','Podciąganie – 5×8','Wiosłowanie – 4×10','Uginanie biceps – 4×10','Bieżnia 20 min'] },
+        { d:'Czwartek – Nogi', e:['Przysiady – 5×8','Leg press – 4×12','Wykroki z obciążeniem – 4×10','Uginanie nóg – 4×10','Rower 15 min'] },
+        { d:'Piątek – Barki + Cardio', e:['Wyciskanie żołnierskie – 5×6','Unoszenie bokiem – 4×12','Plank – 4×60s','Bieżnia 20 min'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Klatka', e:['Wyciskanie sztangi – 5×6','Rozpiętki – 4×12','Dipy obciążone – 4×10'] },
+        { d:'Wtorek – Plecy', e:['Martwy ciąg – 5×5','Podciąganie – 5×8','Wiosłowanie – 4×10'] },
+        { d:'Środa – Cardio', e:['Bieżnia 35 min lub rower 35 min w strefie tętna 65-75%'] },
+        { d:'Czwartek – Nogi', e:['Przysiady – 5×8','Leg press – 4×12','Wykroki – 4×10','Uginanie nóg – 4×10'] },
+        { d:'Piątek – Barki + HIIT', e:['Wyciskanie żołnierskie – 5×6','Unoszenie bokiem – 4×12','Burpees – 5×12','Plank – 4×60s'] },
+      ],
+    },
+    dom: {
+      2: [
+        { d:'Wtorek – Siła max', e:['Pistolety – 5×8 na nogę','Pompki jednoręczne – 5×8','Dipy – 5×15','Hollow body – 5×30s','Plank z uniesieniem – 4×60s'] },
+        { d:'Piątek – HIIT max', e:['Burpees z wyskokiem – 6×12','Przysiady jump – 5×15','Mountain climbers – 5×25','High knees – 5×30s','Pompki z klaskaniem – 4×10'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła', e:['Pistolety – 5×8 na nogę','Pompki jednoręczne – 5×8','Dipy – 4×15','Hollow body – 4×30s'] },
+        { d:'Środa – HIIT max', e:['Burpees z wyskokiem – 6×12','Przysiady jump – 5×15','Mountain climbers – 5×25','High knees – 5×30s'] },
+        { d:'Piątek – Siła + Core', e:['Pistolety – 4×8','Pompki jednoręczne – 4×8','Plank z uniesieniem – 4×60s','Ab wheel – 4×10','L-sit – 3×10s'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła góra', e:['Pompki jednoręczne – 5×8','Dipy – 5×15','Pompki z klaskaniem – 4×10','Hollow body – 4×30s'] },
+        { d:'Wtorek – HIIT', e:['Burpees z wyskokiem – 6×12','Przysiady jump – 5×15','Mountain climbers – 5×25','High knees – 5×30s'] },
+        { d:'Czwartek – Siła dół', e:['Pistolety – 5×8 na nogę','Wykroki bułgarskie – 4×10','Mostek jednonóż – 4×15','Wspięcia jednonóż – 4×15'] },
+        { d:'Piątek – HIIT + Core', e:['Burpees – 5×12','Plank z uniesieniem – 4×60s','Ab wheel – 4×10','L-sit – 3×10s'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła góra', e:['Pompki jednoręczne – 5×8','Dipy – 5×15','Pompki z klaskaniem – 4×10','Hollow body – 4×30s'] },
+        { d:'Wtorek – HIIT', e:['Burpees z wyskokiem – 6×12','Przysiady jump – 5×15','Mountain climbers – 5×25'] },
+        { d:'Środa – Siła dół', e:['Pistolety – 5×8 na nogę','Wykroki bułgarskie – 4×10','Mostek jednonóż – 4×15'] },
+        { d:'Czwartek – HIIT', e:['High knees – 6×30s','Burpees – 5×12','Jumping jacks – 5×30s'] },
+        { d:'Piątek – Full body siła', e:['Pompki jednoręczne – 4×8','Pistolety – 4×8','Dipy – 4×15','Plank z uniesieniem – 4×60s'] },
+      ],
+    },
+    hantle: {
+      2: [
+        { d:'Wtorek – Full body siłowy', e:['Swing hantlem – 6×15','Wyciskanie hantli – 5×8','Martwy ciąg hantlami – 5×6','Przysiady hantlami – 5×10','Wiosłowanie hantlem – 5×8'] },
+        { d:'Piątek – Cardio + siła', e:['Swing – 6×15','Thrusters – 5×12','Goblet squat – 4×15','Rosyjskie skręty – 5×20','Plank – 4×60s'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Push', e:['Wyciskanie hantli – 5×8','Wyciskanie skos – 4×10','Wyciskanie żołnierskie – 4×8','Wyciskanie francuskie – 4×10'] },
+        { d:'Środa – Pull + Nogi', e:['Martwy ciąg hantlami – 5×6','Wiosłowanie hantlem – 5×8','Przysiady z hantlami – 5×10','Swing – 4×15'] },
+        { d:'Piątek – Full body HIIT', e:['Swing – 6×15','Thrusters – 5×12','Goblet squat – 4×15','Rosyjskie skręty – 5×20'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Klatka', e:['Wyciskanie hantli – 5×8','Rozpiętki – 4×12','Wyciskanie skos – 4×10','Pompki – 3×15'] },
+        { d:'Wtorek – Plecy + Cardio', e:['Martwy ciąg hantlami – 5×6','Wiosłowanie hantlem – 5×8','Odwrotne rozpiętki – 4×12','Swing – 5×15'] },
+        { d:'Czwartek – Nogi', e:['Przysiady z hantlami – 5×10','Martwy ciąg rumuński – 4×10','Wykroki bułgarskie – 4×10','Swing – 4×15'] },
+        { d:'Piątek – Barki + HIIT', e:['Wyciskanie żołnierskie – 5×8','Unoszenie bokiem – 4×12','Thrusters – 5×12','Swing – 5×15'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Klatka', e:['Wyciskanie hantli – 5×8','Rozpiętki – 4×12','Wyciskanie skos – 4×10'] },
+        { d:'Wtorek – Plecy', e:['Martwy ciąg hantlami – 5×6','Wiosłowanie hantlem – 5×8','Odwrotne rozpiętki – 4×12'] },
+        { d:'Środa – HIIT z hantlami', e:['Swing – 6×15','Thrusters – 5×12','Goblet squat – 4×15','Rosyjskie skręty – 5×20'] },
+        { d:'Czwartek – Nogi', e:['Przysiady z hantlami – 5×10','Martwy ciąg rumuński – 4×10','Wykroki bułgarskie – 4×10'] },
+        { d:'Piątek – Barki + Core', e:['Wyciskanie żołnierskie – 5×8','Unoszenie bokiem – 4×12','Plank z hantlem – 4×60s','Swing – 5×15'] },
+      ],
+    },
+    zewnatrz: {
+      2: [
+        { d:'Wtorek – Siła max', e:['Podciąganie – 5×10','Pompki jednoręczne – 5×8','Dipy – 5×15','Pistolety – 5×8 na nogę','Plank z uniesieniem – 4×60s'] },
+        { d:'Sobota – HIIT max', e:['Sprinty 10×80 m','Burpees z wyskokiem – 6×12','Mountain climbers – 5×25','High knees – 5×30s','Bieg 2 km po HIIT'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła', e:['Podciąganie – 5×10','Pompki jednoręczne – 5×8','Dipy – 5×15','Pistolety – 4×8 na nogę'] },
+        { d:'Środa – Bieg', e:['Bieg ciągły 8 km'] },
+        { d:'Piątek – HIIT max', e:['Sprinty 10×80 m','Burpees z wyskokiem – 6×12','Mountain climbers – 5×25','High knees – 5×30s'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła góra', e:['Podciąganie – 5×10','Pompki jednoręczne – 5×8','Dipy – 5×15','Hollow body – 4×30s'] },
+        { d:'Wtorek – Bieg długi', e:['Bieg ciągły 8–10 km'] },
+        { d:'Czwartek – Siła dół', e:['Pistolety – 5×8 na nogę','Wykroki bułgarskie – 4×10','Przysiady jump – 5×15','Mostek jednonóż – 4×15'] },
+        { d:'Piątek – HIIT max', e:['Sprinty 10×80 m','Burpees – 6×12','Mountain climbers – 5×25','High knees – 5×30s'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła góra', e:['Podciąganie – 5×10','Pompki jednoręczne – 5×8','Dipy – 5×15','Hollow body – 4×30s'] },
+        { d:'Wtorek – Bieg', e:['Bieg ciągły 8 km'] },
+        { d:'Środa – Siła dół', e:['Pistolety – 5×8 na nogę','Wykroki bułgarskie – 4×10','Przysiady jump – 5×15'] },
+        { d:'Czwartek – Interwały biegowe', e:['Rozgrzewka trucht 5 min','Sprinty 10×100 m','Trucht 5 min wyciszenie'] },
+        { d:'Piątek – Full body max', e:['Podciąganie – 4×10','Pompki jednoręczne – 4×8','Pistolety – 4×8','Plank z uniesieniem – 4×60s'] },
+      ],
+    },
+  },
+};
+
+// Siła i wydolność
+T.sila = {
+  poczatkujacy: {
+    silownia: {
+      2: [
+        { d:'Poniedziałek – Siła góra', e:['Wyciskanie sztangi – 5×5 (nauka techniki)','Wiosłowanie sztangą – 5×5','Wyciskanie żołnierskie – 3×8','Plank – 3×30s'] },
+        { d:'Czwartek – Siła dół', e:['Przysiady ze sztangą – 5×5 (nauka techniki)','Martwy ciąg – 5×5','Wykroki – 3×10 na nogę','Wspięcia – 3×15'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła A', e:['Przysiady – 5×5','Wyciskanie sztangi – 5×5','Wiosłowanie sztangą – 5×5'] },
+        { d:'Środa – Siła B', e:['Przysiady – 5×5','Wyciskanie żołnierskie – 5×5','Martwy ciąg – 1×5'] },
+        { d:'Piątek – Siła A', e:['Przysiady – 5×5','Wyciskanie sztangi – 5×5','Wiosłowanie sztangą – 5×5'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła góra A', e:['Wyciskanie sztangi – 5×5','Wiosłowanie sztangą – 5×5','Dipy – 3×8'] },
+        { d:'Wtorek – Siła dół A', e:['Przysiady – 5×5','Martwy ciąg – 3×5','Leg press – 3×10'] },
+        { d:'Czwartek – Siła góra B', e:['Wyciskanie żołnierskie – 5×5','Podciąganie (asystowane) – 3×6','Wiosłowanie hantlem – 3×10'] },
+        { d:'Piątek – Siła dół B', e:['Przysiady – 5×5','Wykroki – 3×10','Uginanie nóg – 3×10','Wspięcia – 3×15'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła A', e:['Przysiady – 5×5','Wyciskanie sztangi – 5×5','Wiosłowanie – 5×5'] },
+        { d:'Wtorek – Siła B', e:['Wyciskanie żołnierskie – 5×5','Martwy ciąg – 3×5','Leg press – 3×10'] },
+        { d:'Środa – Mobilność', e:['Rozciąganie dynamiczne 20 min','Foam rolling','Lekka joga'] },
+        { d:'Czwartek – Siła A', e:['Przysiady – 5×5','Wyciskanie sztangi – 5×5','Wiosłowanie – 5×5'] },
+        { d:'Piątek – Siła B', e:['Wyciskanie żołnierskie – 5×5','Martwy ciąg – 3×5','Podciąganie asystowane – 3×6'] },
+      ],
+    },
+    dom: {
+      2: [
+        { d:'Wtorek – Siła góra', e:['Pompki – 5×8','Dipy na krześle – 4×8','Plank – 4×30s','Odwrotne pompki – 3×8'] },
+        { d:'Piątek – Siła dół', e:['Przysiady – 5×15','Wykroki – 4×10 na nogę','Mostek – 4×15','Wspięcia – 4×20'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła góra', e:['Pompki – 5×8','Dipy na krześle – 4×8','Odwrotne pompki – 3×8','Plank – 3×30s'] },
+        { d:'Środa – Siła dół', e:['Przysiady – 5×15','Wykroki – 4×10 na nogę','Mostek – 4×15','Wspięcia – 4×20'] },
+        { d:'Piątek – Full body', e:['Pompki – 4×10','Przysiady – 4×15','Plank – 3×35s','Burpees – 3×8'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła góra', e:['Pompki – 5×10','Dipy – 4×10','Odwrotne pompki – 3×10','Plank – 3×35s'] },
+        { d:'Wtorek – Siła dół', e:['Przysiady – 5×15','Wykroki – 4×10','Mostek – 4×15','Wspięcia – 4×20'] },
+        { d:'Czwartek – Wytrzymałość góra', e:['Pompki – 3×15','Dipy – 3×12','Plank – 3×40s','Burpees – 3×10'] },
+        { d:'Piątek – Wytrzymałość dół', e:['Przysiady – 4×20','Wykroki – 3×15','Przysiady jump – 3×12','Mostek – 3×15'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła góra', e:['Pompki – 5×10','Dipy – 4×10','Odwrotne pompki – 3×10','Plank – 3×35s'] },
+        { d:'Wtorek – Siła dół', e:['Przysiady – 5×15','Wykroki – 4×10','Mostek – 4×15','Wspięcia – 4×20'] },
+        { d:'Środa – Mobilność', e:['Rozciąganie 20 min','Delikatne cardio – skipping 5 min'] },
+        { d:'Czwartek – Wytrzymałość', e:['Pompki – 3×15','Przysiady – 4×20','Plank – 3×40s','Burpees – 3×10'] },
+        { d:'Piątek – Full body', e:['Pompki – 4×10','Przysiady – 4×15','Dipy – 3×10','Mostek – 3×15'] },
+      ],
+    },
+    hantle: {
+      2: [
+        { d:'Wtorek – Siła góra', e:['Wyciskanie hantli – 5×8','Wiosłowanie hantlem – 5×8','Wyciskanie żołnierskie – 4×8','Plank – 3×30s'] },
+        { d:'Piątek – Siła dół', e:['Martwy ciąg hantlami – 5×8','Przysiady z hantlami – 5×10','Wykroki – 4×10 na nogę','Swing – 3×15'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła góra', e:['Wyciskanie hantli – 5×8','Wiosłowanie hantlem – 5×8','Wyciskanie żołnierskie – 4×8'] },
+        { d:'Środa – Siła dół', e:['Martwy ciąg hantlami – 5×8','Przysiady – 5×10','Wykroki – 4×10 na nogę'] },
+        { d:'Piątek – Full body', e:['Wyciskanie hantli – 4×8','Wiosłowanie – 4×8','Przysiady – 4×10','Swing – 3×12'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła góra A', e:['Wyciskanie hantli – 5×8','Wiosłowanie hantlem – 5×8','Uginanie biceps – 3×10'] },
+        { d:'Wtorek – Siła dół A', e:['Martwy ciąg hantlami – 5×8','Przysiady – 5×10','Swing – 3×15'] },
+        { d:'Czwartek – Siła góra B', e:['Wyciskanie żołnierskie – 5×8','Odwrotne rozpiętki – 4×10','Wyciskanie francuskie – 3×10'] },
+        { d:'Piątek – Siła dół B', e:['Goblet squat – 5×10','Wykroki – 4×10','Mostek z hantlem – 4×12','Swing – 3×15'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła góra A', e:['Wyciskanie hantli – 5×8','Wiosłowanie hantlem – 5×8','Uginanie biceps – 3×10'] },
+        { d:'Wtorek – Siła dół A', e:['Martwy ciąg hantlami – 5×8','Przysiady – 5×10','Swing – 3×15'] },
+        { d:'Środa – Mobilność', e:['Rozciąganie 20 min','Foam rolling'] },
+        { d:'Czwartek – Siła góra B', e:['Wyciskanie żołnierskie – 5×8','Odwrotne rozpiętki – 4×10','Wyciskanie francuskie – 3×10'] },
+        { d:'Piątek – Siła dół B', e:['Goblet squat – 5×10','Wykroki – 4×10','Mostek – 4×12','Swing – 3×15'] },
+      ],
+    },
+    zewnatrz: {
+      2: [
+        { d:'Wtorek – Siła', e:['Pompki – 5×8','Podciąganie (jeśli dostępne) – 4×5','Dipy na ławce – 4×8','Przysiady – 5×15','Plank – 3×30s'] },
+        { d:'Sobota – Bieg', e:['Trucht 25 min w stałym tempie','Rozciąganie – 10 min'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła', e:['Pompki – 5×8','Dipy na ławce – 4×8','Przysiady – 5×15','Plank – 3×30s'] },
+        { d:'Środa – Bieg', e:['Trucht 25–30 min'] },
+        { d:'Piątek – Siła', e:['Pompki – 5×10','Podciąganie – 3×5','Przysiady jump – 4×12','Plank – 3×35s'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła góra', e:['Pompki – 5×8','Dipy – 4×8','Podciąganie – 3×5','Plank – 3×30s'] },
+        { d:'Wtorek – Bieg', e:['Trucht 25 min'] },
+        { d:'Czwartek – Siła dół', e:['Przysiady – 5×15','Wykroki – 4×10','Mostek – 4×15','Wspięcia – 4×20'] },
+        { d:'Piątek – Bieg + Siła', e:['Trucht 20 min','Pompki – 3×10','Przysiady – 3×15'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła góra', e:['Pompki – 5×8','Dipy – 4×8','Podciąganie – 3×5','Plank – 3×30s'] },
+        { d:'Wtorek – Bieg', e:['Trucht 25 min'] },
+        { d:'Środa – Siła dół', e:['Przysiady – 5×15','Wykroki – 4×10','Mostek – 4×15'] },
+        { d:'Czwartek – Bieg', e:['Trucht 25 min'] },
+        { d:'Piątek – Full body', e:['Pompki – 4×10','Przysiady – 4×15','Dipy – 3×8','Plank – 3×35s'] },
+      ],
+    },
+  },
+  sredni: {
+    silownia: {
+      2: [
+        { d:'Poniedziałek – Siła A (Squat/Bench/Row)', e:['Przysiady – 5×5 (ciężar roboczy)','Wyciskanie sztangi – 5×5','Wiosłowanie sztangą – 5×5','Dipy obciążone – 3×8'] },
+        { d:'Czwartek – Siła B (Squat/OHP/Deadlift)', e:['Przysiady – 5×5','Wyciskanie żołnierskie – 5×5','Martwy ciąg – 3×5','Podciąganie – 3×8'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła A', e:['Przysiady – 5×5','Wyciskanie sztangi – 5×5','Wiosłowanie sztangą – 5×5'] },
+        { d:'Środa – Siła B', e:['Przysiady – 5×5','Wyciskanie żołnierskie – 5×5','Martwy ciąg – 3×5'] },
+        { d:'Piątek – Siła A', e:['Przysiady – 5×5','Wyciskanie sztangi – 5×5','Wiosłowanie sztangą – 5×5'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Dolne partie + Siła', e:['Przysiady – 5×5','Martwy ciąg – 4×4','Leg press – 4×8','Uginanie nóg – 3×10'] },
+        { d:'Wtorek – Góra ciała push + Siła', e:['Wyciskanie sztangi – 5×5','Wyciskanie żołnierskie – 4×5','Dipy obciążone – 4×8','Wyciskanie skos – 3×8'] },
+        { d:'Czwartek – Dolne partie + Wytrzymałość', e:['Przysiady – 4×8','Wykroki z obciążeniem – 4×10','Wspięcia obciążone – 5×15','Hip thrust – 4×10'] },
+        { d:'Piątek – Góra ciała pull + Wytrzymałość', e:['Podciąganie – 5×8','Wiosłowanie – 4×8','Uginanie biceps – 4×10','Ściąganie drążka – 3×12'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła nogi', e:['Przysiady – 6×4','Martwy ciąg – 4×4','Leg press – 4×8'] },
+        { d:'Wtorek – Siła góra', e:['Wyciskanie sztangi – 6×4','Wyciskanie żołnierskie – 4×4','Dipy obciążone – 4×8'] },
+        { d:'Środa – Wytrzymałość/Mobilność', e:['Podciąganie – 4×10','Wiosłowanie – 4×10','Plank – 4×60s','Rozciąganie – 15 min'] },
+        { d:'Czwartek – Siła nogi 2', e:['Front squat – 5×4','Hip thrust – 5×8','Wykroki obciążone – 4×10'] },
+        { d:'Piątek – Siła góra 2', e:['Wyciskanie wąskim uchwytem – 5×5','Podciąganie obciążone – 4×6','Dipy obciążone – 4×8'] },
+      ],
+    },
+    dom: {
+      2: [
+        { d:'Wtorek – Siła góra', e:['Pompki wolne z przerwami (3s dół/3s góra) – 5×8','Dipy na krzesłach – 5×12','Odwrotne pompki – 4×10','Plank – 4×50s'] },
+        { d:'Piątek – Siła dół', e:['Przysiady z pauzą (3s na dole) – 5×10','Wykroki bułgarskie – 4×10','Mostek jednonóż – 4×12','Pistolety (próba) – 3×5 na nogę'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła góra', e:['Pompki wolne – 5×8','Dipy – 5×12','Odwrotne pompki – 4×10','Plank – 4×50s'] },
+        { d:'Środa – Siła dół', e:['Przysiady z pauzą – 5×10','Wykroki bułgarskie – 4×10','Mostek jednonóż – 4×12','Pistolety – 3×5 na nogę'] },
+        { d:'Piątek – Wytrzymałość', e:['Pompki – 4×15','Przysiady jump – 4×15','Mountain climbers – 4×20','Burpees – 4×10'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła góra', e:['Pompki wolne – 5×8','Dipy – 5×12','Odwrotne pompki – 4×10','Plank – 4×50s'] },
+        { d:'Wtorek – Siła dół', e:['Przysiady z pauzą – 5×10','Wykroki bułgarskie – 4×10','Pistolety – 3×5 na nogę','Mostek jednonóż – 4×12'] },
+        { d:'Czwartek – Wytrzymałość góra', e:['Pompki – 4×15','Dipy – 4×15','Burpees – 4×10','Plank z uniesieniem – 3×45s'] },
+        { d:'Piątek – Wytrzymałość dół', e:['Przysiady jump – 4×15','Wykroki – 4×15','Mountain climbers – 4×20','High knees – 4×30s'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła góra', e:['Pompki wolne – 5×8','Dipy – 5×12','Odwrotne pompki – 4×10','Plank – 4×50s'] },
+        { d:'Wtorek – Siła dół', e:['Przysiady z pauzą – 5×10','Wykroki bułgarskie – 4×10','Pistolety – 3×5 na nogę'] },
+        { d:'Środa – Mobilność', e:['Rozciąganie dynamiczne 25 min','Foam rolling','Delikatne cardio 10 min'] },
+        { d:'Czwartek – Wytrzymałość', e:['Pompki – 4×15','Przysiady jump – 4×15','Burpees – 4×10','Mountain climbers – 4×20'] },
+        { d:'Piątek – Full body siła', e:['Pompki wolne – 4×8','Pistolety – 3×5','Dipy – 4×12','Plank – 4×50s'] },
+      ],
+    },
+    hantle: {
+      2: [
+        { d:'Poniedziałek – Siła push', e:['Wyciskanie hantli (ciężki) – 5×6','Wyciskanie żołnierskie – 5×5','Wyciskanie skos hantlami – 4×8','Dipy – 3×10'] },
+        { d:'Czwartek – Siła pull + nogi', e:['Martwy ciąg hantlami – 5×6','Wiosłowanie hantlem – 5×6','Przysiady hantlami – 5×8','Swing ciężki – 4×10'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła A', e:['Przysiady hantlami – 5×8','Wyciskanie hantli – 5×6','Wiosłowanie hantlem – 5×6'] },
+        { d:'Środa – Siła B', e:['Martwy ciąg hantlami – 5×5','Wyciskanie żołnierskie – 5×5','Swing ciężki – 4×10'] },
+        { d:'Piątek – Siła + Wytrzymałość', e:['Przysiady hantlami – 4×10','Wyciskanie hantli – 4×8','Wiosłowanie – 4×8','Swing – 5×12'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła nogi', e:['Przysiady hantlami – 5×8','Martwy ciąg rumuński – 5×8','Wykroki bułgarskie – 4×8','Swing ciężki – 4×10'] },
+        { d:'Wtorek – Siła góra push', e:['Wyciskanie hantli – 5×6','Wyciskanie żołnierskie – 5×5','Wyciskanie skos – 4×8','Dipy – 3×10'] },
+        { d:'Czwartek – Wytrzymałość nogi', e:['Goblet squat – 5×12','Wykroki z hantlami – 4×12','Swing – 5×15','Mostek z hantlem – 4×12'] },
+        { d:'Piątek – Wytrzymałość góra', e:['Wiosłowanie hantlem – 5×10','Uginanie biceps – 4×10','Wyciskanie hantli – 4×10','Thrusters – 4×10'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła nogi', e:['Przysiady – 5×8','Martwy ciąg rumuński – 5×8','Wykroki bułgarskie – 4×8'] },
+        { d:'Wtorek – Siła push', e:['Wyciskanie hantli – 5×6','Wyciskanie żołnierskie – 5×5','Wyciskanie skos – 4×8'] },
+        { d:'Środa – Mobilność', e:['Rozciąganie 25 min','Foam rolling','Delikatne cardio'] },
+        { d:'Czwartek – Wytrzymałość nogi', e:['Goblet squat – 5×12','Swing – 5×15','Wykroki – 4×12'] },
+        { d:'Piątek – Wytrzymałość góra', e:['Wiosłowanie – 5×10','Uginanie – 4×10','Thrusters – 4×10','Swing – 4×12'] },
+      ],
+    },
+    zewnatrz: {
+      2: [
+        { d:'Wtorek – Siła', e:['Podciąganie – 5×8','Pompki (wolne tempo) – 5×8','Dipy na ławce – 5×12','Pistolety – 4×6 na nogę'] },
+        { d:'Sobota – Bieg siłowo-wytrzymałościowy', e:['Bieg 5 km + po każdym km: 10 pompek + 10 przysiadów','Sprinty końcowe 4×100 m'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła', e:['Podciąganie – 5×8','Pompki wolne – 5×8','Dipy – 5×12','Pistolety – 4×6 na nogę'] },
+        { d:'Środa – Bieg wytrzymałościowy', e:['Bieg ciągły 6–7 km','Rozciąganie – 10 min'] },
+        { d:'Piątek – Siła + Wytrzymałość', e:['Podciąganie – 4×8','Pompki – 5×15','Przysiady jump – 4×15','Burpees – 4×10'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła góra', e:['Podciąganie – 5×8','Pompki wolne – 5×8','Dipy – 5×12','Plank – 4×50s'] },
+        { d:'Wtorek – Bieg wytrzymałościowy', e:['Bieg ciągły 6 km'] },
+        { d:'Czwartek – Siła dół', e:['Pistolety – 4×6 na nogę','Wykroki bułgarskie – 4×10','Przysiady jump – 4×15','Mostek jednonóż – 4×12'] },
+        { d:'Piątek – Bieg + Siła', e:['Bieg 3 km + 5×100 m sprint','Pompki – 4×10','Podciąganie – 3×8'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła góra', e:['Podciąganie – 5×8','Pompki wolne – 5×8','Dipy – 5×12','Plank – 4×50s'] },
+        { d:'Wtorek – Bieg', e:['Bieg ciągły 6 km'] },
+        { d:'Środa – Siła dół', e:['Pistolety – 4×6 na nogę','Wykroki bułgarskie – 4×10','Przysiady jump – 4×15'] },
+        { d:'Czwartek – Bieg interwałowy', e:['Trucht 5 min','Sprinty 8×80 m','Trucht 5 min'] },
+        { d:'Piątek – Full body siła', e:['Podciąganie – 4×8','Pompki wolne – 4×8','Pistolety – 4×6','Plank – 4×50s'] },
+      ],
+    },
+  },
+  zaawansowany: {
+    silownia: {
+      2: [
+        { d:'Poniedziałek – Siła max A', e:['Przysiady – 6×3 (90%+ ciężaru max)','Wyciskanie sztangi – 6×3','Wiosłowanie sztangą – 5×5','Dipy obciążone – 4×6'] },
+        { d:'Czwartek – Siła max B', e:['Martwy ciąg – 5×3 (90%+)','Wyciskanie żołnierskie – 5×3','Podciąganie obciążone – 5×5','Front squat – 4×5'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła max A', e:['Przysiady – 6×3','Wyciskanie sztangi – 6×3','Wiosłowanie – 5×5'] },
+        { d:'Środa – Siła max B', e:['Martwy ciąg – 5×3','Wyciskanie żołnierskie – 5×3','Podciąganie obciążone – 5×5'] },
+        { d:'Piątek – Siła max A', e:['Przysiady – 6×3','Wyciskanie sztangi – 6×3','Wiosłowanie – 5×5'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła nogi max', e:['Przysiady – 6×3','Martwy ciąg – 5×3','Front squat – 4×5','Hip thrust z obciążeniem – 4×6'] },
+        { d:'Wtorek – Siła push max', e:['Wyciskanie sztangi – 6×3','Wyciskanie żołnierskie – 5×3','Dipy obciążone – 5×6','Wyciskanie wąski uchwyt – 4×5'] },
+        { d:'Czwartek – Wytrzymałość siłowa nogi', e:['Przysiady – 4×10 (70%)','Wykroki obciążone – 4×10','Uginanie nóg – 4×12','Wspięcia obciążone – 5×15'] },
+        { d:'Piątek – Wytrzymałość siłowa pull', e:['Podciąganie obciążone – 5×8','Wiosłowanie – 5×8','Ściąganie drążka – 4×10','Uginanie biceps – 4×10'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła max nogi', e:['Przysiady – 6×3','Martwy ciąg – 5×3','Front squat – 4×4'] },
+        { d:'Wtorek – Siła max góra', e:['Wyciskanie sztangi – 6×3','Wyciskanie żołnierskie – 5×3','Dipy obciążone – 5×5'] },
+        { d:'Środa – Wytrzymałość/Mobilność', e:['Podciąganie – 4×10','Wiosłowanie – 4×10','Plank z obciążeniem – 4×60s','Rozciąganie – 15 min'] },
+        { d:'Czwartek – Siła max nogi 2', e:['Front squat – 5×4','Hip thrust – 5×6','Wykroki obciążone – 4×8'] },
+        { d:'Piątek – Siła max góra 2', e:['Wyciskanie wąski uchwyt – 5×4','Podciąganie obciążone – 5×6','Dipy obciążone – 5×6'] },
+      ],
+    },
+    dom: {
+      2: [
+        { d:'Wtorek – Siła max góra', e:['Pompki jednoręczne – 6×6 na stronę','Dipy na dwóch krzesłach z obciążeniem (plecak) – 5×8','Pompki archer – 4×6 na stronę','Plank z obciążeniem – 4×60s'] },
+        { d:'Piątek – Siła max dół', e:['Pistolety – 6×6 na nogę','Wykroki bułgarskie z obciążeniem (plecak) – 5×8','Mostek jednonóż – 5×15','Nordic hamstring curl (o meble) – 4×5'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła max góra', e:['Pompki jednoręczne – 6×6','Dipy z obciążeniem – 5×8','Pompki archer – 4×6 na stronę'] },
+        { d:'Środa – Siła max dół', e:['Pistolety – 6×6 na nogę','Wykroki bułgarskie z plecakiem – 5×8','Nordic hamstring curl – 4×5'] },
+        { d:'Piątek – Wytrzymałość siłowa', e:['Pompki jednoręczne – 4×8','Pistolety – 4×8','Burpees z wyskokiem – 5×12','Plank z uniesieniem – 4×60s'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła max góra', e:['Pompki jednoręczne – 6×6','Dipy z obciążeniem – 5×8','Pompki archer – 4×6'] },
+        { d:'Wtorek – Siła max dół', e:['Pistolety – 6×6 na nogę','Wykroki bułgarskie z plecakiem – 5×8','Nordic hamstring curl – 4×5'] },
+        { d:'Czwartek – Wytrzymałość siłowa góra', e:['Pompki jednoręczne – 4×8','Dipy – 4×12','Burpees z klaskaniem – 4×10','Hollow body – 4×30s'] },
+        { d:'Piątek – Wytrzymałość siłowa dół', e:['Pistolety – 4×8','Przysiady jump – 5×15','Mountain climbers – 5×25','Mostek jednonóż – 4×15'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła max góra', e:['Pompki jednoręczne – 6×6','Dipy z obciążeniem – 5×8','Pompki archer – 4×6'] },
+        { d:'Wtorek – Siła max dół', e:['Pistolety – 6×6 na nogę','Wykroki bułgarskie z plecakiem – 5×8','Nordic hamstring curl – 4×5'] },
+        { d:'Środa – Mobilność', e:['Rozciąganie statyczne + dynamiczne 30 min','Foam rolling'] },
+        { d:'Czwartek – Wytrzymałość siłowa', e:['Pompki jednoręczne – 4×8','Pistolety – 4×8','Burpees – 5×12','Plank z uniesieniem – 4×60s'] },
+        { d:'Piątek – Full body siła max', e:['Pompki jednoręczne – 4×6','Pistolety – 4×6','Dipy z obciążeniem – 4×8','Hollow body – 4×30s'] },
+      ],
+    },
+    hantle: {
+      2: [
+        { d:'Poniedziałek – Siła max push', e:['Wyciskanie hantli (maksymalny ciężar) – 6×4','Wyciskanie żołnierskie – 5×4','Dipy z obciążeniem – 5×6','Wyciskanie skos – 4×6'] },
+        { d:'Czwartek – Siła max pull + nogi', e:['Martwy ciąg hantlami – 6×4','Wiosłowanie hantlem – 6×4','Swing ciężki – 5×8','Przysiady hantlami – 5×6'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła max A', e:['Przysiady hantlami – 6×5','Wyciskanie hantli – 6×4','Wiosłowanie hantlem – 6×4'] },
+        { d:'Środa – Siła max B', e:['Martwy ciąg hantlami – 6×4','Wyciskanie żołnierskie – 5×4','Swing ciężki – 5×6'] },
+        { d:'Piątek – Wytrzymałość siłowa', e:['Thrusters – 5×10','Swing – 5×15','Goblet squat – 5×12','Wiosłowanie – 5×10'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła max nogi', e:['Przysiady hantlami – 6×5','Martwy ciąg rumuński – 5×5','Wykroki bułgarskie – 5×6','Swing ciężki – 5×8'] },
+        { d:'Wtorek – Siła max push', e:['Wyciskanie hantli – 6×4','Wyciskanie żołnierskie – 5×4','Dipy z obciążeniem – 5×6','Wyciskanie skos – 4×6'] },
+        { d:'Czwartek – Wytrzymałość nogi', e:['Goblet squat – 5×12','Swing – 6×15','Wykroki – 5×12','Mostek z hantlem – 5×12'] },
+        { d:'Piątek – Wytrzymałość pull', e:['Wiosłowanie hantlem – 5×10','Uginanie biceps – 5×10','Thrusters – 5×10','Swing – 5×12'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła max nogi', e:['Przysiady hantlami – 6×5','Martwy ciąg rumuński – 5×5','Wykroki bułgarskie – 5×6'] },
+        { d:'Wtorek – Siła max push', e:['Wyciskanie hantli – 6×4','Wyciskanie żołnierskie – 5×4','Dipy z obciążeniem – 5×6'] },
+        { d:'Środa – Mobilność', e:['Rozciąganie 30 min','Foam rolling','Delikatne cardio'] },
+        { d:'Czwartek – Wytrzymałość', e:['Thrusters – 5×10','Swing – 6×15','Goblet squat – 5×12'] },
+        { d:'Piątek – Full body siła', e:['Przysiady hantlami – 5×5','Wyciskanie – 5×4','Wiosłowanie – 5×4','Swing – 5×8'] },
+      ],
+    },
+    zewnatrz: {
+      2: [
+        { d:'Wtorek – Siła max', e:['Podciąganie obciążone (plecak z obciążeniem) – 6×5','Pompki jednoręczne – 5×6 na stronę','Dipy – 6×10','Pistolety – 5×8 na nogę'] },
+        { d:'Sobota – Wytrzymałość siłowa', e:['Bieg 8 km','Sprinty 10×100 m','Pompki na końcu – 5×15','Podciąganie na końcu – 5×10'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła max', e:['Podciąganie obciążone – 6×5','Pompki jednoręczne – 5×6','Dipy – 6×10','Pistolety – 5×8 na nogę'] },
+        { d:'Środa – Bieg wytrzymałościowy', e:['Bieg ciągły 10 km'] },
+        { d:'Piątek – Wytrzymałość siłowa', e:['Sprinty 10×100 m','Pompki – 5×15','Podciąganie – 5×10','Burpees – 5×12'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła max góra', e:['Podciąganie obciążone – 6×5','Pompki jednoręczne – 5×6','Dipy – 6×10','Hollow body – 4×30s'] },
+        { d:'Wtorek – Bieg długi', e:['Bieg ciągły 10–12 km'] },
+        { d:'Czwartek – Siła max dół', e:['Pistolety – 6×8 na nogę','Wykroki bułgarskie – 5×10','Nordic hamstring – 4×5','Przysiady jump – 5×15'] },
+        { d:'Piątek – HIIT zaawansowany', e:['Sprinty 12×80 m','Burpees z wyskokiem – 6×12','Pompki jednoręczne – 4×6','Mountain climbers – 5×25'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła max góra', e:['Podciąganie obciążone – 6×5','Pompki jednoręczne – 5×6','Dipy – 6×10'] },
+        { d:'Wtorek – Bieg', e:['Bieg ciągły 10 km'] },
+        { d:'Środa – Siła max dół', e:['Pistolety – 6×8 na nogę','Wykroki bułgarskie – 5×10','Nordic hamstring – 4×5'] },
+        { d:'Czwartek – Bieg interwałowy', e:['Trucht 5 min','Sprinty 12×100 m (90% max)','Trucht 5 min'] },
+        { d:'Piątek – Full body siła max', e:['Podciąganie obciążone – 5×5','Pompki jednoręczne – 5×6','Pistolety – 5×8','Hollow body – 4×30s'] },
+      ],
+    },
+  },
+};
+
+// Ogólne zdrowie: podobne do sila ale spokojniejsze, więcej mobilności
+T.zdrowie = {
+  poczatkujacy: {
+    silownia: {
+      2: [
+        { d:'Poniedziałek – Full body łagodny', e:['Rower stacjonarny 10 min','Wyciskanie maszyna – 3×12','Ściąganie drążka – 3×12','Leg press – 3×15','Plank – 3×30s','Rozciąganie 10 min'] },
+        { d:'Czwartek – Full body łagodny', e:['Bieżnia trucht 10 min','Wiosłowanie maszyna – 3×12','Przysiady (lekkie) – 3×15','Unoszenie nóg – 3×15','Rozciąganie 10 min'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Góra ciała', e:['Bieżnia 8 min','Wyciskanie maszyna – 3×12','Ściąganie drążka – 3×12','Unoszenie ramion – 3×15'] },
+        { d:'Środa – Dół ciała', e:['Rower 10 min','Leg press – 3×15','Uginanie nóg – 3×15','Prostowanie nóg – 3×15','Wspięcia – 3×20'] },
+        { d:'Piątek – Full body + Core', e:['Bieżnia 15 min','Wiosłowanie maszyna – 3×12','Plank – 3×30s','Rozciąganie 10 min'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Klatka/Triceps', e:['Wyciskanie maszyna – 3×12','Rozpiętki maszyna – 3×12','Dipy asystowane – 3×10'] },
+        { d:'Wtorek – Cardio', e:['Rower lub bieżnia 25 min','Rozciąganie – 10 min'] },
+        { d:'Czwartek – Plecy/Biceps/Nogi', e:['Ściąganie drążka – 3×12','Leg press – 3×15','Uginanie biceps maszyna – 3×12'] },
+        { d:'Piątek – Core + Mobilność', e:['Plank – 3×30s','Unoszenie nóg – 3×15','Rozciąganie statyczne 15 min'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Klatka', e:['Wyciskanie maszyna – 3×12','Rozpiętki – 3×12','Dipy asystowane – 3×10'] },
+        { d:'Wtorek – Cardio', e:['Rower 25 min'] },
+        { d:'Środa – Plecy + Nogi', e:['Ściąganie drążka – 3×12','Leg press – 3×15','Uginanie biceps – 3×12'] },
+        { d:'Czwartek – Cardio', e:['Bieżnia 25 min'] },
+        { d:'Piątek – Core + Mobilność', e:['Plank – 3×30s','Unoszenie nóg – 3×15','Rozciąganie statyczne 15 min'] },
+      ],
+    },
+    dom: {
+      2: [
+        { d:'Wtorek – Ruch ogólny', e:['Marsz w miejscu 5 min','Pompki (kolana) – 3×10','Przysiady – 3×15','Mostek – 3×15','Rozciąganie 15 min'] },
+        { d:'Piątek – Ruch ogólny', e:['Jumping jacks 5 min','Wykroki – 3×10 na nogę','Plank – 3×25s','Rozciąganie 15 min'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła łagodna', e:['Pompki (kolana) – 3×10','Przysiady – 3×15','Mostek – 3×15','Plank – 3×25s'] },
+        { d:'Środa – Mobilność + Joga', e:['Rozciąganie dynamiczne 15 min','Pozycje jogi – 15 min','Delikatny marsz 10 min'] },
+        { d:'Piątek – Cardio łagodny', e:['Jumping jacks – 3×30s','Marsz szybki 15 min','Wykroki – 3×10 na nogę','Rozciąganie – 10 min'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła', e:['Pompki – 3×10','Przysiady – 3×15','Mostek – 3×15','Plank – 3×25s'] },
+        { d:'Wtorek – Mobilność', e:['Rozciąganie dynamiczne 20 min','Joga podstawy 15 min'] },
+        { d:'Czwartek – Cardio łagodny', e:['Jumping jacks – 3×30s','Wykroki – 3×10','Marsz szybki 15 min'] },
+        { d:'Piątek – Full body łagodny', e:['Pompki – 3×10','Przysiady – 3×15','Plank – 3×25s','Rozciąganie 15 min'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła łagodna', e:['Pompki – 3×10','Przysiady – 3×15','Mostek – 3×15','Plank – 3×25s'] },
+        { d:'Wtorek – Mobilność', e:['Rozciąganie 20 min','Joga podstawy 15 min'] },
+        { d:'Środa – Cardio', e:['Jumping jacks – 3×30s','Marsz szybki 20 min'] },
+        { d:'Czwartek – Mobilność', e:['Rozciąganie dynamiczne 25 min'] },
+        { d:'Piątek – Full body', e:['Pompki – 3×10','Przysiady – 3×15','Plank – 3×25s','Rozciąganie 15 min'] },
+      ],
+    },
+    hantle: {
+      2: [
+        { d:'Wtorek – Full body łagodny', e:['Wyciskanie hantli – 3×12','Wiosłowanie hantlem – 3×12','Przysiady z hantlami – 3×12','Unoszenie bokiem – 3×12'] },
+        { d:'Piątek – Full body + Mobilność', e:['Swing lekki – 3×12','Wykroki z hantlami – 3×10 na nogę','Plank – 3×30s','Rozciąganie 15 min'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Góra ciała', e:['Wyciskanie hantli – 3×12','Wiosłowanie hantlem – 3×12','Unoszenie bokiem – 3×12','Uginanie biceps – 3×12'] },
+        { d:'Środa – Mobilność', e:['Rozciąganie 20 min','Swing lekki – 3×10'] },
+        { d:'Piątek – Dół ciała', e:['Przysiady z hantlami – 3×12','Wykroki – 3×10 na nogę','Mostek – 3×15','Swing – 3×12'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Góra ciała', e:['Wyciskanie hantli – 3×12','Wiosłowanie hantlem – 3×12','Unoszenie bokiem – 3×12'] },
+        { d:'Wtorek – Mobilność', e:['Rozciąganie 25 min'] },
+        { d:'Czwartek – Dół ciała', e:['Przysiady z hantlami – 3×12','Wykroki – 3×10','Mostek – 3×15','Swing – 3×12'] },
+        { d:'Piątek – Full body łagodny', e:['Swing – 3×12','Wyciskanie – 3×12','Przysiady – 3×12','Plank – 3×30s'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Góra ciała', e:['Wyciskanie hantli – 3×12','Wiosłowanie hantlem – 3×12','Unoszenie bokiem – 3×12'] },
+        { d:'Wtorek – Mobilność', e:['Rozciąganie 25 min'] },
+        { d:'Środa – Dół ciała', e:['Przysiady z hantlami – 3×12','Wykroki – 3×10','Mostek – 3×15','Swing – 3×12'] },
+        { d:'Czwartek – Mobilność', e:['Rozciąganie 25 min','Foam rolling'] },
+        { d:'Piątek – Full body', e:['Swing – 3×12','Wyciskanie – 3×12','Przysiady – 3×12','Plank – 3×30s'] },
+      ],
+    },
+    zewnatrz: {
+      2: [
+        { d:'Wtorek – Spacer/Marsz + Siła', e:['Spacer szybki lub marsz nordic 30 min','Pompki – 3×8','Przysiady – 3×12','Rozciąganie 10 min'] },
+        { d:'Sobota – Aktywność na świeżym powietrzu', e:['Trucht lekki 20 min lub rower','Pompki – 3×8','Wykroki – 3×10 na nogę','Rozciąganie 15 min'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Marsz + Siła', e:['Marsz szybki 20 min','Pompki – 3×8','Przysiady – 3×12','Plank – 3×25s'] },
+        { d:'Środa – Trucht', e:['Trucht lekki 20–25 min','Rozciąganie – 10 min'] },
+        { d:'Piątek – Aktywność', e:['Marsz lub rower 30 min','Pompki – 3×10','Wykroki – 3×10 na nogę'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła', e:['Pompki – 3×10','Dipy na ławce – 3×8','Przysiady – 3×12','Plank – 3×25s'] },
+        { d:'Wtorek – Marsz', e:['Marsz szybki lub nordic walking 30 min'] },
+        { d:'Czwartek – Trucht', e:['Trucht 20–25 min','Rozciąganie 10 min'] },
+        { d:'Piątek – Siła + Mobilność', e:['Pompki – 3×10','Przysiady – 3×12','Rozciąganie 15 min'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła', e:['Pompki – 3×10','Dipy na ławce – 3×8','Przysiady – 3×12','Plank – 3×25s'] },
+        { d:'Wtorek – Marsz', e:['Marsz szybki 30 min'] },
+        { d:'Środa – Trucht', e:['Trucht 20 min','Rozciąganie 10 min'] },
+        { d:'Czwartek – Marsz', e:['Marsz nordic 30 min'] },
+        { d:'Piątek – Full body + Mobilność', e:['Pompki – 3×10','Przysiady – 3×12','Plank – 3×25s','Rozciąganie 15 min'] },
+      ],
+    },
+  },
+  sredni: {
+    silownia: {
+      2: [
+        { d:'Poniedziałek – Full body funkcyjny', e:['Rower 10 min','Wyciskanie sztangi – 3×10','Wiosłowanie – 3×10','Przysiady – 3×12','Plank – 3×45s','Rozciąganie 10 min'] },
+        { d:'Czwartek – Full body funkcyjny', e:['Bieżnia 10 min','Martwy ciąg – 3×8','Podciąganie – 3×8','Leg press – 3×12','Unoszenie nóg – 3×15','Rozciąganie 10 min'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła + Mobilność', e:['Wyciskanie sztangi – 4×8','Podciąganie – 4×8','Wyciskanie żołnierskie – 3×10','Rozciąganie 15 min'] },
+        { d:'Środa – Cardio + Core', e:['Rower lub bieżnia 25 min','Plank – 4×45s','Unoszenie nóg – 4×15'] },
+        { d:'Piątek – Siła dół + Mobilność', e:['Przysiady – 4×10','Leg press – 4×10','Wykroki – 3×12','Rozciąganie 15 min'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Klatka/Plecy', e:['Wyciskanie sztangi – 4×8','Podciąganie – 4×8','Wiosłowanie – 3×10','Rozciąganie 10 min'] },
+        { d:'Wtorek – Cardio', e:['Rower lub bieżnia 30 min'] },
+        { d:'Czwartek – Nogi + Core', e:['Przysiady – 4×10','Leg press – 4×10','Plank – 4×45s','Wykroki – 3×12'] },
+        { d:'Piątek – Barki + Mobilność', e:['Wyciskanie żołnierskie – 4×8','Unoszenie bokiem – 3×12','Rozciąganie 20 min'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Klatka/Plecy', e:['Wyciskanie sztangi – 4×8','Podciąganie – 4×8','Wiosłowanie – 3×10'] },
+        { d:'Wtorek – Cardio', e:['Rower lub bieżnia 30 min'] },
+        { d:'Środa – Nogi + Core', e:['Przysiady – 4×10','Leg press – 4×10','Plank – 4×45s'] },
+        { d:'Czwartek – Cardio', e:['Bieżnia 30 min'] },
+        { d:'Piątek – Barki + Mobilność', e:['Wyciskanie żołnierskie – 4×8','Unoszenie bokiem – 3×12','Rozciąganie 20 min'] },
+      ],
+    },
+    dom: {
+      2: [
+        { d:'Wtorek – Siła funkcyjna', e:['Pompki – 4×12','Przysiady – 4×18','Mostek jednonóż – 3×12','Plank – 3×45s','Rozciąganie 15 min'] },
+        { d:'Piątek – Cardio + Mobilność', e:['Jumping jacks – 4×30s','High knees – 4×30s','Burpees – 3×10','Rozciąganie statyczne 20 min'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła funkcyjna', e:['Pompki – 4×12','Przysiady – 4×18','Mostek jednonóż – 3×12','Plank – 3×45s'] },
+        { d:'Środa – Mobilność + Joga', e:['Rozciąganie dynamiczne 20 min','Joga 20 min'] },
+        { d:'Piątek – Cardio + Siła', e:['Jumping jacks – 4×30s','Burpees – 3×10','Pompki – 3×12','Przysiady – 3×15'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła góra', e:['Pompki – 4×12','Dipy – 3×12','Odwrotne pompki – 3×10','Plank – 3×45s'] },
+        { d:'Wtorek – Mobilność', e:['Joga 30 min lub rozciąganie dynamiczne 25 min'] },
+        { d:'Czwartek – Siła dół', e:['Przysiady – 4×18','Wykroki – 3×12','Mostek jednonóż – 3×12','Wspięcia – 3×20'] },
+        { d:'Piątek – Cardio + Mobilność', e:['Jumping jacks – 4×30s','Burpees – 3×10','Rozciąganie 20 min'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła góra', e:['Pompki – 4×12','Dipy – 3×12','Odwrotne pompki – 3×10','Plank – 3×45s'] },
+        { d:'Wtorek – Mobilność', e:['Joga 30 min'] },
+        { d:'Środa – Siła dół', e:['Przysiady – 4×18','Wykroki – 3×12','Mostek jednonóż – 3×12'] },
+        { d:'Czwartek – Cardio łagodny', e:['Jumping jacks – 3×30s','Marsz szybki 15 min','High knees – 3×30s'] },
+        { d:'Piątek – Full body + Mobilność', e:['Pompki – 3×12','Przysiady – 3×15','Plank – 3×45s','Rozciąganie 20 min'] },
+      ],
+    },
+    hantle: {
+      2: [
+        { d:'Wtorek – Full body funkcyjny', e:['Swing hantlem – 4×12','Wyciskanie hantli – 3×10','Przysiady z hantlami – 3×12','Wiosłowanie hantlem – 3×10','Plank – 3×45s'] },
+        { d:'Piątek – Full body + Mobilność', e:['Swing – 4×12','Goblet squat – 3×12','Rosyjskie skręty – 3×15','Rozciąganie 20 min'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła', e:['Wyciskanie hantli – 4×10','Wiosłowanie hantlem – 4×10','Wyciskanie żołnierskie – 3×10','Plank – 3×45s'] },
+        { d:'Środa – Mobilność', e:['Rozciąganie 25 min','Swing lekki – 3×10'] },
+        { d:'Piątek – Dół + Core', e:['Swing – 4×12','Goblet squat – 4×12','Wykroki – 3×12','Rosyjskie skręty – 3×15'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła góra', e:['Wyciskanie hantli – 4×10','Wiosłowanie – 4×10','Wyciskanie żołnierskie – 3×10'] },
+        { d:'Wtorek – Mobilność', e:['Rozciąganie 30 min'] },
+        { d:'Czwartek – Siła dół', e:['Goblet squat – 4×12','Swing – 4×12','Wykroki z hantlami – 3×12','Mostek – 3×15'] },
+        { d:'Piątek – Full body + Mobilność', e:['Swing – 4×12','Wyciskanie – 3×10','Przysiady – 3×12','Rozciąganie 20 min'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła góra', e:['Wyciskanie hantli – 4×10','Wiosłowanie – 4×10','Wyciskanie żołnierskie – 3×10'] },
+        { d:'Wtorek – Mobilność', e:['Rozciąganie 30 min'] },
+        { d:'Środa – Siła dół', e:['Goblet squat – 4×12','Swing – 4×12','Wykroki – 3×12'] },
+        { d:'Czwartek – Mobilność', e:['Joga 30 min lub rozciąganie 30 min'] },
+        { d:'Piątek – Full body + Mobilność', e:['Swing – 4×12','Wyciskanie – 3×10','Przysiady – 3×12','Rozciąganie 20 min'] },
+      ],
+    },
+    zewnatrz: {
+      2: [
+        { d:'Wtorek – Bieg + Siła', e:['Trucht 25 min','Pompki – 3×12','Przysiady – 3×15','Dipy na ławce – 3×10','Rozciąganie 10 min'] },
+        { d:'Sobota – Aktywność długa', e:['Rower lub marsz nordic 45 min','Pompki – 3×10','Rozciąganie 15 min'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła + Bieg', e:['Pompki – 4×12','Dipy – 3×10','Przysiady – 4×15','Trucht 15 min'] },
+        { d:'Środa – Mobilność na świeżym powietrzu', e:['Marsz szybki 30 min','Rozciąganie na trawie 15 min'] },
+        { d:'Piątek – Bieg', e:['Trucht 30 min','Rozciąganie 10 min'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła', e:['Pompki – 4×12','Dipy – 3×10','Podciąganie – 3×8','Plank – 3×45s'] },
+        { d:'Wtorek – Bieg', e:['Trucht 25 min'] },
+        { d:'Czwartek – Bieg', e:['Trucht 30 min'] },
+        { d:'Piątek – Siła + Mobilność', e:['Pompki – 3×12','Przysiady – 3×15','Rozciąganie 20 min'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła', e:['Pompki – 4×12','Dipy – 3×10','Podciąganie – 3×8','Plank – 3×45s'] },
+        { d:'Wtorek – Bieg', e:['Trucht 25 min'] },
+        { d:'Środa – Mobilność', e:['Marsz nordic 30 min','Rozciąganie 15 min'] },
+        { d:'Czwartek – Bieg', e:['Trucht 30 min'] },
+        { d:'Piątek – Siła + Mobilność', e:['Pompki – 3×12','Przysiady – 3×15','Rozciąganie 20 min'] },
+      ],
+    },
+  },
+  zaawansowany: {
+    silownia: {
+      2: [
+        { d:'Poniedziałek – Siła funkcyjna A', e:['Wyciskanie sztangi – 5×5','Martwy ciąg – 4×5','Podciąganie – 4×8','Plank z obciążeniem – 4×60s'] },
+        { d:'Czwartek – Siła funkcyjna B', e:['Przysiady – 5×5','Wyciskanie żołnierskie – 4×5','Wiosłowanie – 4×8','Rozciąganie 20 min'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła góra', e:['Wyciskanie sztangi – 5×5','Podciąganie – 5×8','Wyciskanie żołnierskie – 4×5','Dipy obciążone – 3×10'] },
+        { d:'Środa – Cardio + Core', e:['Bieżnia 25 min','Plank – 5×60s','Unoszenie nóg – 4×15','Rozciąganie 15 min'] },
+        { d:'Piątek – Siła dół', e:['Przysiady – 5×5','Martwy ciąg – 4×4','Wykroki obciążone – 4×10','Wspięcia – 5×15'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła + Mobilność', e:['Wyciskanie sztangi – 5×5','Podciąganie – 5×8','Rozciąganie 15 min'] },
+        { d:'Wtorek – Cardio', e:['Rower lub bieżnia 30 min'] },
+        { d:'Czwartek – Siła dół + Mobilność', e:['Przysiady – 5×5','Martwy ciąg – 4×4','Wykroki – 4×10','Rozciąganie 15 min'] },
+        { d:'Piątek – Funkcyjny + Core', e:['Wyciskanie żołnierskie – 4×6','Wiosłowanie – 4×8','Plank – 4×60s','Ab wheel – 4×10'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła góra', e:['Wyciskanie sztangi – 5×5','Podciąganie – 5×8','Wyciskanie żołnierskie – 4×5'] },
+        { d:'Wtorek – Cardio', e:['Bieżnia 30 min'] },
+        { d:'Środa – Siła dół', e:['Przysiady – 5×5','Martwy ciąg – 4×4','Wykroki – 4×10'] },
+        { d:'Czwartek – Cardio + Mobilność', e:['Rower 25 min','Rozciąganie 20 min'] },
+        { d:'Piątek – Funkcyjny + Core', e:['Wyciskanie żołnierskie – 4×6','Wiosłowanie – 4×8','Plank – 4×60s','Rozciąganie 15 min'] },
+      ],
+    },
+    dom: {
+      2: [
+        { d:'Wtorek – Siła funkcyjna', e:['Pistolety – 5×8 na nogę','Pompki jednoręczne – 5×6','Dipy z obciążeniem – 4×10','Plank z uniesieniem – 4×60s','Rozciąganie 15 min'] },
+        { d:'Piątek – Cardio + Mobilność', e:['Burpees – 5×12','Przysiady jump – 4×15','Joga zaawansowana 20 min','Rozciąganie 15 min'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła funkcyjna', e:['Pistolety – 5×8 na nogę','Pompki jednoręczne – 5×6','Dipy z obciążeniem – 4×10','Hollow body – 4×30s'] },
+        { d:'Środa – Mobilność + Joga', e:['Joga zaawansowana 40 min'] },
+        { d:'Piątek – Cardio + Siła', e:['Burpees z wyskokiem – 5×12','Pistolety – 4×8','Pompki jednoręczne – 4×6','Plank z uniesieniem – 4×60s'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła góra', e:['Pompki jednoręczne – 5×6','Dipy z obciążeniem – 5×10','Pompki archer – 4×6','Hollow body – 4×30s'] },
+        { d:'Wtorek – Mobilność + Joga', e:['Joga 40 min'] },
+        { d:'Czwartek – Siła dół', e:['Pistolety – 5×8 na nogę','Wykroki bułgarskie – 4×10','Nordic hamstring – 4×5','Mostek jednonóż – 4×15'] },
+        { d:'Piątek – Cardio + Mobilność', e:['Burpees – 5×12','Przysiady jump – 4×15','Rozciąganie 20 min'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła góra', e:['Pompki jednoręczne – 5×6','Dipy z obciążeniem – 5×10','Pompki archer – 4×6'] },
+        { d:'Wtorek – Mobilność', e:['Joga 40 min'] },
+        { d:'Środa – Siła dół', e:['Pistolety – 5×8 na nogę','Wykroki bułgarskie – 4×10','Nordic hamstring – 4×5'] },
+        { d:'Czwartek – Mobilność', e:['Joga 40 min lub rozciąganie zaawansowane'] },
+        { d:'Piątek – Cardio + Siła', e:['Burpees – 5×12','Pistolety – 4×8','Pompki jednoręczne – 4×6','Plank z uniesieniem – 4×60s'] },
+      ],
+    },
+    hantle: {
+      2: [
+        { d:'Wtorek – Siła funkcyjna', e:['Swing ciężki – 5×10','Wyciskanie hantli – 5×6','Martwy ciąg hantlami – 5×6','Wiosłowanie hantlem – 5×6','Plank – 4×60s','Rozciąganie 15 min'] },
+        { d:'Piątek – Full body + Mobilność', e:['Thrusters – 5×8','Swing – 5×12','Goblet squat – 4×12','Joga lub rozciąganie 25 min'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła funkcyjna', e:['Wyciskanie hantli – 5×6','Martwy ciąg hantlami – 5×5','Wiosłowanie – 5×6','Plank – 4×60s'] },
+        { d:'Środa – Mobilność', e:['Rozciąganie 30 min','Foam rolling'] },
+        { d:'Piątek – Full body + Cardio', e:['Swing – 5×12','Thrusters – 5×8','Goblet squat – 4×12','Rosyjskie skręty – 4×20'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła', e:['Wyciskanie hantli – 5×6','Wiosłowanie – 5×6','Martwy ciąg – 5×5','Plank – 4×60s'] },
+        { d:'Wtorek – Mobilność', e:['Rozciąganie zaawansowane 35 min','Foam rolling'] },
+        { d:'Czwartek – Full body funkcyjny', e:['Swing – 5×12','Thrusters – 5×8','Goblet squat – 4×12','Rosyjskie skręty – 4×20'] },
+        { d:'Piątek – Siła + Mobilność', e:['Wyciskanie – 5×6','Wiosłowanie – 5×6','Rozciąganie 20 min'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła', e:['Wyciskanie hantli – 5×6','Wiosłowanie – 5×6','Martwy ciąg – 5×5'] },
+        { d:'Wtorek – Mobilność', e:['Rozciąganie 35 min','Foam rolling'] },
+        { d:'Środa – Full body funkcyjny', e:['Swing – 5×12','Thrusters – 5×8','Goblet squat – 4×12'] },
+        { d:'Czwartek – Mobilność', e:['Joga 40 min'] },
+        { d:'Piątek – Siła + Mobilność', e:['Wyciskanie – 5×6','Wiosłowanie – 5×6','Swing – 4×10','Rozciąganie 20 min'] },
+      ],
+    },
+    zewnatrz: {
+      2: [
+        { d:'Wtorek – Siła funkcyjna', e:['Podciąganie obciążone – 5×6','Pompki jednoręczne – 5×6','Dipy – 5×12','Pistolety – 5×8 na nogę','Plank z uniesieniem – 4×60s','Rozciąganie 15 min'] },
+        { d:'Sobota – Bieg długi + Mobilność', e:['Bieg ciągły 10–12 km','Rozciąganie 20 min'] },
+      ],
+      3: [
+        { d:'Poniedziałek – Siła funkcyjna', e:['Podciąganie – 5×8','Pompki jednoręczne – 5×6','Dipy – 5×12','Pistolety – 5×8 na nogę'] },
+        { d:'Środa – Bieg + Mobilność', e:['Bieg ciągły 8 km','Rozciąganie 15 min'] },
+        { d:'Piątek – Cardio + Mobilność', e:['Bieg ciągły 6 km','Sprinty 4×100 m','Rozciąganie 20 min'] },
+      ],
+      4: [
+        { d:'Poniedziałek – Siła', e:['Podciąganie – 5×8','Pompki jednoręczne – 5×6','Dipy – 5×12','Plank z uniesieniem – 4×60s'] },
+        { d:'Wtorek – Bieg', e:['Bieg ciągły 8 km'] },
+        { d:'Czwartek – Siła dół + Mobilność', e:['Pistolety – 5×8 na nogę','Wykroki bułgarskie – 4×10','Nordic hamstring – 4×5','Rozciąganie 15 min'] },
+        { d:'Piątek – Bieg + Mobilność', e:['Bieg 6 km','Rozciąganie 20 min'] },
+      ],
+      5: [
+        { d:'Poniedziałek – Siła', e:['Podciąganie – 5×8','Pompki jednoręczne – 5×6','Dipy – 5×12'] },
+        { d:'Wtorek – Bieg', e:['Bieg ciągły 8 km'] },
+        { d:'Środa – Mobilność', e:['Joga na świeżym powietrzu lub marsz 40 min + rozciąganie'] },
+        { d:'Czwartek – Siła dół', e:['Pistolety – 5×8 na nogę','Wykroki bułgarskie – 4×10','Nordic hamstring – 4×5'] },
+        { d:'Piątek – Bieg + Mobilność', e:['Bieg 6 km','Rozciąganie 20 min'] },
+      ],
+    },
+  },
+};
+
+// BAZA DIET (uproszczona ale z każdą kombinacją)
+const D = {
+  redukcja: {
+    wszystko: {
+      3: [{ n:'Śniadanie', d:'Jajecznica z 3 jaj, 2 kromki chleba żytniego, ogórek, pomidor' },{ n:'Obiad', d:'Pierś z kurczaka 200g grillowana, kasza gryczana 80g, surówka z kapusty' },{ n:'Kolacja', d:'Sałatka: mix sałat, tuńczyk w wodzie, jajko, ogórek, pomidor, łyżka oliwy' }],
+      4: [{ n:'Śniadanie', d:'Owsianka 50g na wodzie, jabłko, borówki, łyżka chia' },{ n:'Obiad', d:'Pierś z kurczaka 150g, ryż brązowy 60g, brokuł na parze' },{ n:'Podwieczorek', d:'Twaróg chudy 150g, ogórek, rzodkiewka' },{ n:'Kolacja', d:'Zupa jarzynowa 400ml, 2 kromki chleba żytniego' }],
+      5: [{ n:'Śniadanie', d:'Jajecznica 2 jaja + 2 białka, pomidor, 1 kromka chleba' },{ n:'II śniadanie', d:'Jogurt naturalny 150g, jabłko, garść orzechów 15g' },{ n:'Obiad', d:'Dorsz pieczony 200g, kasza jaglana 70g, sałatka warzywna' },{ n:'Podwieczorek', d:'Twaróg chudy z rzodkiewką i szczypiorkiem' },{ n:'Kolacja', d:'Sałatka z tuńczykiem, mix sałat, oliwa z oliwek' }],
+      6: [{ n:'Śniadanie', d:'Owsianka 50g, banan, łyżka masła orzechowego' },{ n:'II śniadanie', d:'Jogurt naturalny 150g, garść jagód' },{ n:'Obiad', d:'Kurczak 150g, ryż 60g, warzywa grillowane' },{ n:'Przekąska', d:'Marchewka + 2 łyżki humusu' },{ n:'Podwieczorek', d:'Twaróg chudy 100g, ogórek' },{ n:'Kolacja', d:'Omlet z 2 jaj, szpinak, pomidor' }],
+    },
+    wegetarian: {
+      3: [{ n:'Śniadanie', d:'Owsianka 60g na mleku, owoce sezonowe, łyżka chia' },{ n:'Obiad', d:'Zupa soczewicowa z warzywami, 2 kromki chleba żytniego' },{ n:'Kolacja', d:'Sałatka: ciecierzyca, mix sałat, pomidor, ogórek, feta, oliwa' }],
+      4: [{ n:'Śniadanie', d:'Jajecznica z 3 jaj, szpinak, pomidor, 1 kromka chleba' },{ n:'Obiad', d:'Tofu smażone 150g, kasza gryczana 70g, brokuł z czosnkiem' },{ n:'Podwieczorek', d:'Twaróg chudy 150g z owocami' },{ n:'Kolacja', d:'Zupa krem z dyni, 2 kromki chleba' }],
+      5: [{ n:'Śniadanie', d:'Owsianka z owocami i jogurtem naturalnym' },{ n:'II śniadanie', d:'Jabłko + garść orzechów' },{ n:'Obiad', d:'Kotlet z ciecierzycy, kasza jaglana, surówka' },{ n:'Podwieczorek', d:'Jogurt grecki 150g, siemię lniane' },{ n:'Kolacja', d:'Sałatka z jajkiem i warzywami, oliwa z oliwek' }],
+      6: [{ n:'Śniadanie', d:'Owsianka z bananem i masłem orzechowym' },{ n:'II śniadanie', d:'Jogurt naturalny z jagodami' },{ n:'Obiad', d:'Tofu 150g, ryż brązowy, warzywa duszone' },{ n:'Przekąska', d:'Marchewka + humus' },{ n:'Podwieczorek', d:'Twaróg chudy z rzodkiewką' },{ n:'Kolacja', d:'Omlet z serem i warzywami' }],
+    },
+    wegan: {
+      3: [{ n:'Śniadanie', d:'Owsianka na mleku roślinnym, banan, masło orzechowe, chia' },{ n:'Obiad', d:'Soczewica czerwona 100g, ryż brązowy 60g, warzywa duszone w curry' },{ n:'Kolacja', d:'Sałatka z ciecierzycy, awokado, pomidor, ogórek, cytryna, oliwa' }],
+      4: [{ n:'Śniadanie', d:'Smoothie bowl: banan, jagody, mleko roślinne, nasiona słonecznika' },{ n:'Obiad', d:'Tofu 150g, kasza gryczana, brokuł z czosnkiem' },{ n:'Podwieczorek', d:'Jabłko + garść migdałów' },{ n:'Kolacja', d:'Zupa z soczewicy, 2 kromki chleba wegańskiego' }],
+      5: [{ n:'Śniadanie', d:'Owsianka z owocami i masłem orzechowym' },{ n:'II śniadanie', d:'Banan + garść orzechów' },{ n:'Obiad', d:'Tempeh 150g, ryż, sałatka warzywna' },{ n:'Podwieczorek', d:'Hummus + marchewka i seler' },{ n:'Kolacja', d:'Sałatka z ciecierzycy i awokado' }],
+      6: [{ n:'Śniadanie', d:'Owsianka z bananem i chia' },{ n:'II śniadanie', d:'Smoothie owocowo-warzywne' },{ n:'Obiad', d:'Tofu smażone, kasza, warzywa' },{ n:'Przekąska', d:'Garść orzechów mieszanych' },{ n:'Podwieczorek', d:'Hummus z warzywami' },{ n:'Kolacja', d:'Sałatka z soczewicą i warzywami' }],
+    },
+    bezgluten: {
+      3: [{ n:'Śniadanie', d:'Jajecznica z 3 jaj, pomidor, pieczywo ryżowe bezglutenowe' },{ n:'Obiad', d:'Kurczak 200g pieczony, kasza gryczana bezglutenowa 80g, surówka' },{ n:'Kolacja', d:'Sałatka z tuńczykiem, mix sałat, oliwa, cytryna' }],
+      4: [{ n:'Śniadanie', d:'Owsianka bezglutenowa z owocami' },{ n:'Obiad', d:'Łosoś 150g, ryż 60g, warzywa na parze' },{ n:'Podwieczorek', d:'Jogurt naturalny, garść jagód' },{ n:'Kolacja', d:'Zupa warzywna, jajko ugotowane' }],
+      5: [{ n:'Śniadanie', d:'Omlet z 3 jaj ze szpinakiem i pomidorem' },{ n:'II śniadanie', d:'Banan + masło orzechowe' },{ n:'Obiad', d:'Kurczak 180g, ziemniaki pieczone, sałatka' },{ n:'Podwieczorek', d:'Twaróg chudy z owocami' },{ n:'Kolacja', d:'Sałatka z łososiem i warzywami' }],
+      6: [{ n:'Śniadanie', d:'Jajecznica z 2 jaj, pomidor' },{ n:'II śniadanie', d:'Jogurt naturalny + owoce' },{ n:'Obiad', d:'Kurczak, ryż, warzywa' },{ n:'Przekąska', d:'Marchewka + hummus' },{ n:'Podwieczorek', d:'Twaróg chudy' },{ n:'Kolacja', d:'Omlet z warzywami' }],
+    },
+  },
+  masa: {
+    wszystko: {
+      3: [{ n:'Śniadanie', d:'Owsianka 100g na mleku, 3 jaja sadzone, banan' },{ n:'Obiad', d:'Ryż 120g, pierś z kurczaka 250g, brokuł, łyżka masła orzechowego' },{ n:'Kolacja', d:'Makaron 100g, mięso mielone 200g, sos pomidorowy, parmezan' }],
+      4: [{ n:'Śniadanie', d:'Owsianka 100g, 4 jaja, banan, masło orzechowe' },{ n:'Obiad', d:'Ryż 120g, kurczak 250g, warzywa, oliwa' },{ n:'Podwieczorek', d:'Twaróg 200g, owoce, garść orzechów' },{ n:'Kolacja', d:'Makaron 100g, tuńczyk, pomidor, oliwa' }],
+      5: [{ n:'Śniadanie', d:'Owsianka 100g, 3 jaja, banan' },{ n:'II śniadanie', d:'Kanapki z indykiem i serem 3 szt., jabłko' },{ n:'Obiad', d:'Ryż 130g, kurczak 250g, brokuł, oliwa' },{ n:'Podwieczorek', d:'Shake: mleko, banan, masło orzechowe, kakao' },{ n:'Kolacja', d:'Makaron 100g, mięso mielone 200g, warzywa' }],
+      6: [{ n:'Śniadanie', d:'Owsianka 100g, 3 jaja, banan' },{ n:'II śniadanie', d:'Twaróg 150g, owoce' },{ n:'Obiad', d:'Ryż 130g, kurczak 250g, warzywa' },{ n:'Przekąska', d:'Kanapki 2 szt. z masłem orzechowym i bananem' },{ n:'Podwieczorek', d:'Shake proteinowy z mlekiem' },{ n:'Kolacja', d:'Makaron 100g, jaja 3 szt., ser żółty' }],
+    },
+    wegetarian: {
+      3: [{ n:'Śniadanie', d:'Owsianka 100g na mleku, 3 jaja sadzone, banan, garść orzechów' },{ n:'Obiad', d:'Ryż 120g, tofu 200g smażone, brokuł, sos sojowy, oliwa' },{ n:'Kolacja', d:'Makaron 100g, ser ricotta, szpinak, parmezan, oliwa' }],
+      4: [{ n:'Śniadanie', d:'Owsianka 100g, 3 jaja, banan, masło orzechowe' },{ n:'Obiad', d:'Ryż 120g, ciecierzyca 150g, warzywa, curry' },{ n:'Podwieczorek', d:'Twaróg 200g, owoce, orzechy' },{ n:'Kolacja', d:'Makaron 100g, jaja 3 szt., ser żółty, warzywa' }],
+      5: [{ n:'Śniadanie', d:'Owsianka 100g, jaja 3 szt., banan' },{ n:'II śniadanie', d:'Kanapki z serem i jajkiem 3 szt.' },{ n:'Obiad', d:'Ryż 130g, tofu 200g, brokuł, oliwa' },{ n:'Podwieczorek', d:'Shake: mleko, banan, masło orzechowe, kakao' },{ n:'Kolacja', d:'Makaron 100g, ser feta, szpinak, pomidor' }],
+      6: [{ n:'Śniadanie', d:'Owsianka 100g, jaja 3 szt., banan' },{ n:'II śniadanie', d:'Twaróg 150g z owocami' },{ n:'Obiad', d:'Ryż 130g, tofu 200g, warzywa' },{ n:'Przekąska', d:'Kanapki 2 szt. z masłem orzechowym i bananem' },{ n:'Podwieczorek', d:'Shake z mleka, banana i kakao' },{ n:'Kolacja', d:'Makaron 100g, jaja, ser żółty' }],
+    },
+    wegan: {
+      3: [{ n:'Śniadanie', d:'Owsianka 100g na mleku roślinnym, banan, masło orzechowe, chia' },{ n:'Obiad', d:'Ryż 130g, tempeh 200g, brokuł, sos sojowy, olej sezamowy' },{ n:'Kolacja', d:'Makaron 100g, soczewica 100g, pomidory, czosnek, oliwa' }],
+      4: [{ n:'Śniadanie', d:'Owsianka 100g, banan, masło orzechowe, orzechy' },{ n:'Obiad', d:'Ryż 130g, tofu 200g, warzywa, curry' },{ n:'Podwieczorek', d:'Hummus 100g, warzywa, chleb ryżowy' },{ n:'Kolacja', d:'Makaron 100g, ciecierzyca, szpinak, pomidory' }],
+      5: [{ n:'Śniadanie', d:'Owsianka 100g, banan, masło orzechowe' },{ n:'II śniadanie', d:'Shake: mleko roślinne, banan, masło orzechowe, daktyle' },{ n:'Obiad', d:'Ryż 130g, tempeh 200g, brokuł' },{ n:'Podwieczorek', d:'Chleb ryżowy 3 szt. z hummusem i awokado' },{ n:'Kolacja', d:'Makaron 100g, soczewica, pomidory, oliwa' }],
+      6: [{ n:'Śniadanie', d:'Owsianka 100g, banan, chia' },{ n:'II śniadanie', d:'Shake z mleka roślinnego i banana' },{ n:'Obiad', d:'Ryż 130g, tofu 200g, warzywa' },{ n:'Przekąska', d:'Garść orzechów + daktyle' },{ n:'Podwieczorek', d:'Hummus z warzywami i chlebem ryżowym' },{ n:'Kolacja', d:'Makaron 100g, ciecierzyca, szpinak' }],
+    },
+    bezgluten: {
+      3: [{ n:'Śniadanie', d:'Owsianka bezglutenowa 100g, 3 jaja, banan' },{ n:'Obiad', d:'Ryż 130g, kurczak 250g, brokuł, oliwa' },{ n:'Kolacja', d:'Ziemniaki pieczone 200g, łosoś 200g, sałatka' }],
+      4: [{ n:'Śniadanie', d:'Owsianka bezglutenowa 100g, jaja 3 szt., banan' },{ n:'Obiad', d:'Ryż 130g, kurczak 250g, warzywa' },{ n:'Podwieczorek', d:'Twaróg 200g, owoce, orzechy' },{ n:'Kolacja', d:'Ziemniaki 200g, jaja 3 szt., surówka' }],
+      5: [{ n:'Śniadanie', d:'Owsianka bezglutenowa 100g, jaja 3 szt., banan' },{ n:'II śniadanie', d:'Shake z mleka, banana i masła orzechowego' },{ n:'Obiad', d:'Ryż 130g, kurczak 250g, brokuł' },{ n:'Podwieczorek', d:'Twaróg 200g z owocami' },{ n:'Kolacja', d:'Łosoś 200g, ziemniaki pieczone, sałatka' }],
+      6: [{ n:'Śniadanie', d:'Owsianka bezglutenowa, jaja, banan' },{ n:'II śniadanie', d:'Twaróg z owocami' },{ n:'Obiad', d:'Ryż, kurczak 250g, warzywa' },{ n:'Przekąska', d:'Shake mleko + banan + masło orzechowe' },{ n:'Podwieczorek', d:'Twaróg 150g, orzechy' },{ n:'Kolacja', d:'Łosoś, ziemniaki, sałatka' }],
+    },
+  },
+  utrzymanie: {
+    wszystko: {
+      3: [{ n:'Śniadanie', d:'Owsianka 70g, jajo sadzone, banan' },{ n:'Obiad', d:'Kurczak 180g, ryż 90g, warzywa duszone' },{ n:'Kolacja', d:'Kanapki żytnie 3 szt. z twarogiem i warzywami' }],
+      4: [{ n:'Śniadanie', d:'Owsianka 70g, 2 jaja, banan' },{ n:'Obiad', d:'Kurczak 180g, ryż 90g, surówka' },{ n:'Podwieczorek', d:'Jogurt naturalny 200g, garść orzechów' },{ n:'Kolacja', d:'Kanapki 3 szt. z indykiem i warzywami' }],
+      5: [{ n:'Śniadanie', d:'Jajecznica z 3 jaj, 2 kromki chleba, pomidor' },{ n:'II śniadanie', d:'Jabłko + garść orzechów' },{ n:'Obiad', d:'Kurczak 180g, ryż 90g, brokuł' },{ n:'Podwieczorek', d:'Twaróg chudy 150g z owocami' },{ n:'Kolacja', d:'Sałatka z tuńczykiem, jajkiem i warzywami' }],
+      6: [{ n:'Śniadanie', d:'Owsianka 70g, jaja 2 szt., banan' },{ n:'II śniadanie', d:'Jogurt 150g, jabłko' },{ n:'Obiad', d:'Kurczak 180g, ryż 90g, warzywa' },{ n:'Przekąska', d:'Marchewka + hummus' },{ n:'Podwieczorek', d:'Twaróg chudy 100g' },{ n:'Kolacja', d:'Kanapki 2 szt. z serem i warzywami' }],
+    },
+    wegetarian: {
+      3: [{ n:'Śniadanie', d:'Owsianka 70g, 2 jaja sadzone, banan' },{ n:'Obiad', d:'Tofu 180g, ryż 90g, warzywa duszone' },{ n:'Kolacja', d:'Kanapki z serem i warzywami, jogurt naturalny' }],
+      4: [{ n:'Śniadanie', d:'Owsianka 70g, jaja 2 szt., banan' },{ n:'Obiad', d:'Ciecierzyca 150g, kasza jaglana 80g, surówka' },{ n:'Podwieczorek', d:'Twaróg 150g z owocami' },{ n:'Kolacja', d:'Kanapki 3 szt. z serem i warzywami' }],
+      5: [{ n:'Śniadanie', d:'Jajecznica z 3 jaj, 2 kromki chleba, pomidor' },{ n:'II śniadanie', d:'Jabłko + garść orzechów' },{ n:'Obiad', d:'Tofu 180g, ryż 90g, brokuł' },{ n:'Podwieczorek', d:'Jogurt grecki 150g, owoce' },{ n:'Kolacja', d:'Sałatka z jajkiem, fetą i warzywami' }],
+      6: [{ n:'Śniadanie', d:'Owsianka 70g, jaja 2 szt., banan' },{ n:'II śniadanie', d:'Jogurt 150g, jabłko' },{ n:'Obiad', d:'Tofu 180g, ryż 90g, warzywa' },{ n:'Przekąska', d:'Marchewka + hummus' },{ n:'Podwieczorek', d:'Twaróg chudy 100g' },{ n:'Kolacja', d:'Kanapki z serem i warzywami' }],
+    },
+    wegan: {
+      3: [{ n:'Śniadanie', d:'Owsianka 70g na mleku roślinnym, banan, masło orzechowe' },{ n:'Obiad', d:'Ryż 90g, tofu 180g, warzywa, sos sojowy' },{ n:'Kolacja', d:'Sałatka z ciecierzycy, awokado i warzywami' }],
+      4: [{ n:'Śniadanie', d:'Owsianka 70g, banan, orzechy' },{ n:'Obiad', d:'Ryż 90g, tempeh 150g, warzywa duszone' },{ n:'Podwieczorek', d:'Hummus + marchewka i seler' },{ n:'Kolacja', d:'Sałatka z ciecierzycy i awokado' }],
+      5: [{ n:'Śniadanie', d:'Owsianka 70g, banan, masło orzechowe' },{ n:'II śniadanie', d:'Jabłko + garść orzechów' },{ n:'Obiad', d:'Ryż 90g, tofu 180g, brokuł' },{ n:'Podwieczorek', d:'Hummus z warzywami' },{ n:'Kolacja', d:'Sałatka z soczewicy i warzyw' }],
+      6: [{ n:'Śniadanie', d:'Owsianka 70g, banan' },{ n:'II śniadanie', d:'Smoothie owocowe' },{ n:'Obiad', d:'Ryż 90g, tofu 180g, warzywa' },{ n:'Przekąska', d:'Garść orzechów' },{ n:'Podwieczorek', d:'Hummus + warzywa' },{ n:'Kolacja', d:'Sałatka z ciecierzycy' }],
+    },
+    bezgluten: {
+      3: [{ n:'Śniadanie', d:'Owsianka bezglutenowa 70g, 2 jaja, banan' },{ n:'Obiad', d:'Kurczak 180g, ryż 90g, warzywa duszone' },{ n:'Kolacja', d:'Łosoś pieczony 150g, ziemniaki pieczone 150g, sałatka' }],
+      4: [{ n:'Śniadanie', d:'Owsianka bezglutenowa 70g, jaja 2 szt., banan' },{ n:'Obiad', d:'Kurczak 180g, ryż 90g, surówka' },{ n:'Podwieczorek', d:'Jogurt naturalny 200g, owoce' },{ n:'Kolacja', d:'Łosoś 150g, sałatka' }],
+      5: [{ n:'Śniadanie', d:'Omlet z 3 jaj, szpinak, pomidor' },{ n:'II śniadanie', d:'Jabłko + garść orzechów' },{ n:'Obiad', d:'Kurczak 180g, ryż 90g, brokuł' },{ n:'Podwieczorek', d:'Twaróg chudy 150g z owocami' },{ n:'Kolacja', d:'Łosoś 150g, sałatka warzywna' }],
+      6: [{ n:'Śniadanie', d:'Omlet z 2 jaj, pomidor' },{ n:'II śniadanie', d:'Jogurt + owoce' },{ n:'Obiad', d:'Kurczak, ryż, warzywa' },{ n:'Przekąska', d:'Marchewka + hummus' },{ n:'Podwieczorek', d:'Twaróg chudy' },{ n:'Kolacja', d:'Łosoś, sałatka' }],
+    },
+  },
+  zdrowie: {
+    wszystko: {
+      3: [{ n:'Śniadanie', d:'Owsianka z owocami sezonowymi, orzechami i miodem' },{ n:'Obiad', d:'Pieczony łosoś 150g, kasza jaglana 80g, warzywa na parze' },{ n:'Kolacja', d:'Zupa krem z dyni, 2 kromki chleba pełnoziarnistego' }],
+      4: [{ n:'Śniadanie', d:'Owsianka z owocami i orzechami' },{ n:'Obiad', d:'Kurczak 160g pieczony, kasza jaglana, brokuł' },{ n:'Podwieczorek', d:'Jogurt naturalny z owocami i nasionami chia' },{ n:'Kolacja', d:'Sałatka z grillowanymi warzywami i oliwą' }],
+      5: [{ n:'Śniadanie', d:'Owsianka z owocami i miodem' },{ n:'II śniadanie', d:'Jabłko + garść orzechów włoskich' },{ n:'Obiad', d:'Łosoś 150g, ryż brązowy 80g, warzywa' },{ n:'Podwieczorek', d:'Jogurt naturalny z nasionami chia' },{ n:'Kolacja', d:'Sałatka z kurczakiem, mix sałat, oliwa' }],
+      6: [{ n:'Śniadanie', d:'Owsianka z owocami' },{ n:'II śniadanie', d:'Jogurt z orzechami' },{ n:'Obiad', d:'Kurczak 160g, ryż brązowy, warzywa' },{ n:'Przekąska', d:'Jabłko + migdały' },{ n:'Podwieczorek', d:'Twaróg chudy z owocami' },{ n:'Kolacja', d:'Sałatka warzywna z oliwą i serem' }],
+    },
+    wegetarian: {
+      3: [{ n:'Śniadanie', d:'Owsianka z owocami, orzechami i miodem' },{ n:'Obiad', d:'Zupa z soczewicy, 2 kromki chleba żytniego' },{ n:'Kolacja', d:'Sałatka z fetą, warzywami i oliwą' }],
+      4: [{ n:'Śniadanie', d:'Owsianka z owocami i orzechami' },{ n:'Obiad', d:'Tofu 150g, kasza jaglana, brokuł' },{ n:'Podwieczorek', d:'Jogurt grecki z owocami i chia' },{ n:'Kolacja', d:'Sałatka z jajkiem i warzywami' }],
+      5: [{ n:'Śniadanie', d:'Owsianka z owocami i miodem' },{ n:'II śniadanie', d:'Jabłko + orzechy włoskie' },{ n:'Obiad', d:'Ciecierzyca 150g, kasza 80g, surówka' },{ n:'Podwieczorek', d:'Jogurt naturalny z chia' },{ n:'Kolacja', d:'Sałatka z fetą i warzywami' }],
+      6: [{ n:'Śniadanie', d:'Owsianka z owocami' },{ n:'II śniadanie', d:'Jogurt z orzechami' },{ n:'Obiad', d:'Tofu 150g, kasza, warzywa' },{ n:'Przekąska', d:'Jabłko + migdały' },{ n:'Podwieczorek', d:'Twaróg z owocami' },{ n:'Kolacja', d:'Sałatka z jajkiem i warzywami' }],
+    },
+    wegan: {
+      3: [{ n:'Śniadanie', d:'Owsianka na mleku roślinnym z owocami, orzechami i syropem klonowym' },{ n:'Obiad', d:'Ryż brązowy 90g, tofu 150g, warzywa, sos sojowy' },{ n:'Kolacja', d:'Sałatka z ciecierzycy, awokado, warzyw i oliwy' }],
+      4: [{ n:'Śniadanie', d:'Owsianka z owocami i masłem orzechowym' },{ n:'Obiad', d:'Ryż brązowy, tempeh 150g, warzywa' },{ n:'Podwieczorek', d:'Hummus z warzywami' },{ n:'Kolacja', d:'Sałatka z soczewicy i warzyw' }],
+      5: [{ n:'Śniadanie', d:'Owsianka z owocami i syropem klonowym' },{ n:'II śniadanie', d:'Banan + orzechy' },{ n:'Obiad', d:'Ryż brązowy, tofu 150g, brokuł' },{ n:'Podwieczorek', d:'Hummus z marchewką' },{ n:'Kolacja', d:'Sałatka z ciecierzycy i awokado' }],
+      6: [{ n:'Śniadanie', d:'Owsianka z owocami' },{ n:'II śniadanie', d:'Smoothie owocowe' },{ n:'Obiad', d:'Ryż brązowy, tofu, warzywa' },{ n:'Przekąska', d:'Garść orzechów' },{ n:'Podwieczorek', d:'Hummus z warzywami' },{ n:'Kolacja', d:'Sałatka z soczewicy' }],
+    },
+    bezgluten: {
+      3: [{ n:'Śniadanie', d:'Owsianka bezglutenowa z owocami i orzechami' },{ n:'Obiad', d:'Łosoś pieczony 150g, kasza gryczana 80g, warzywa' },{ n:'Kolacja', d:'Zupa warzywna, jajko ugotowane, sałatka' }],
+      4: [{ n:'Śniadanie', d:'Owsianka bezglutenowa z owocami' },{ n:'Obiad', d:'Łosoś 150g, ryż 80g, brokuł' },{ n:'Podwieczorek', d:'Jogurt naturalny z owocami i chia' },{ n:'Kolacja', d:'Sałatka z jajkiem i warzywami' }],
+      5: [{ n:'Śniadanie', d:'Owsianka bezglutenowa z owocami i miodem' },{ n:'II śniadanie', d:'Jabłko + orzechy' },{ n:'Obiad', d:'Kurczak 160g, ryż 80g, warzywa' },{ n:'Podwieczorek', d:'Jogurt naturalny z chia' },{ n:'Kolacja', d:'Sałatka z łososiem i warzywami' }],
+      6: [{ n:'Śniadanie', d:'Owsianka bezglutenowa z owocami' },{ n:'II śniadanie', d:'Jogurt z orzechami' },{ n:'Obiad', d:'Kurczak, ryż, warzywa' },{ n:'Przekąska', d:'Jabłko + migdały' },{ n:'Podwieczorek', d:'Twaróg z owocami' },{ n:'Kolacja', d:'Sałatka warzywna z oliwą' }],
+    },
+  },
+};
+
+const celLabels = { masa:'Budowa masy', redukcja:'Redukcja tłuszczu', sila:'Siła i wydolność', zdrowie:'Ogólne zdrowie' };
+const pozLabels = { poczatkujacy:'Początkujący', sredni:'Średni', zaawansowany:'Zaawansowany' };
+const miejLabels = { silownia:'Siłownia', dom:'Dom (bez sprzętu)', hantle:'Dom (z hantlami)', zewnatrz:'Na zewnątrz' };
+const dcelLabels = { redukcja:'Redukcja wagi', masa:'Budowa masy', utrzymanie:'Utrzymanie wagi', zdrowie:'Zdrowe odżywianie' };
+const dprefLabels = { wszystko:'Wszystkojedzący', wegetarian:'Wegetarianin', wegan:'Wegański', bezgluten:'Bez glutenu' };
+
+function generateTrening() {
+  const cel = sel['tcel'];
+  const poz = sel['tpoz'];
+  const miej = sel['tmiej'];
+  const dni = parseInt(sel['tdni']);
+
+  if (!cel || !poz || !miej || !dni) {
+    alert('Wybierz wszystkie opcje przed wygenerowaniem planu!');
+    return;
+  }
+
+  const days = T?.[cel]?.[poz]?.[miej]?.[dni];
+  const result = document.getElementById('tresult');
+  const title = document.getElementById('tresult-title');
+  const body = document.getElementById('tresult-body');
+
+  if (!days) {
+    title.textContent = 'Ups – brak planu dla tej kombinacji';
+    body.innerHTML = '<p style="color:var(--muted)">Przepraszamy, ten zestaw opcji nie jest jeszcze dostępny. Spróbuj innej kombinacji.</p>';
+    result.classList.add('show');
+    return;
+  }
+
+  title.textContent = `${celLabels[cel]} • ${pozLabels[poz]} • ${miejLabels[miej]} • ${dni} dni`;
+  body.innerHTML = days.map(day => `
+    <div class="day">
+      <div class="day-name">${day.d}</div>
+      <div class="day-ex">${day.e.join('<br>')}</div>
+    </div>
+  `).join('');
+  result.classList.add('show');
+  result.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function generateDieta() {
+  const cel = sel['dcel'];
+  const pref = sel['dpref'];
+  const pos = parseInt(sel['dpos']);
+
+  if (!cel || !pref || !pos) {
+    alert('Wybierz wszystkie opcje przed wygenerowaniem planu!');
+    return;
+  }
+
+  const meals = D?.[cel]?.[pref]?.[pos];
+  const result = document.getElementById('dresult');
+  const title = document.getElementById('dresult-title');
+  const body = document.getElementById('dresult-body');
+
+  if (!meals) {
+    title.textContent = 'Ups – brak planu dla tej kombinacji';
+    body.innerHTML = '<p style="color:var(--muted)">Przepraszamy, ten zestaw opcji nie jest jeszcze dostępny.</p>';
+    result.classList.add('show');
+    return;
+  }
+
+  title.textContent = `${dcelLabels[cel]} • ${dprefLabels[pref]} • ${pos} posiłki`;
+  body.innerHTML = `<div class="badge">Przykładowy dzień</div>` + meals.map(m => `
+    <div class="meal">
+      <div class="meal-name">${m.n}</div>
+      <div class="meal-desc">${m.d}</div>
+    </div>
+  `).join('');
+  result.classList.add('show');
+  result.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+</script>
+</body>
+</html>
